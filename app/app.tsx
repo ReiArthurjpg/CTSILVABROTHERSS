@@ -299,7 +299,7 @@ const App = () => {
                   <div className="relative overflow-hidden group">
                     <div className="absolute inset-0 bg-red-600/20 group-hover:bg-transparent transition-all duration-700 z-10"></div>
                     <img 
-                      src="https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1400" 
+                      src="/images/forca-coletivo.jpg" 
                       className="w-full grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000 scale-105 group-hover:scale-100"
                       alt="Treino Coletivo"
                     />
