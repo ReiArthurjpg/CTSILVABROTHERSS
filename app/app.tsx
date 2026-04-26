@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Shield, 
   Users, 
@@ -210,6 +210,304 @@ const TiltCard = ({ children, className = '' }) => {
     >
       {children}
     </motion.div>
+  );
+};
+
+// --- REACT BITS: DecryptedText ---
+const DecryptedText = ({
+  text,
+  speed = 50,
+  maxIterations = 10,
+  sequential = false,
+  revealDirection = 'start',
+  useOriginalCharsOnly = false,
+  characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+',
+  className = '',
+  parentClassName = '',
+  encryptedClassName = '',
+  animateOn = 'hover',
+  clickMode = 'once',
+  ...props
+}) => {
+  const [displayText, setDisplayText] = useState(text);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState(new Set());
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [isDecrypted, setIsDecrypted] = useState(animateOn !== 'click');
+  const [direction, setDirection] = useState('forward');
+
+  const containerRef = useRef(null);
+  const orderRef = useRef([]);
+  const pointerRef = useRef(0);
+  const intervalRef = useRef(null);
+
+  const availableChars = useMemo(() => {
+    return useOriginalCharsOnly
+      ? Array.from(new Set(text.split(''))).filter(char => char !== ' ')
+      : characters.split('');
+  }, [useOriginalCharsOnly, text, characters]);
+
+  const shuffleText = useCallback(
+    (originalText, currentRevealed) => {
+      return originalText
+        .split('')
+        .map((char, i) => {
+          if (char === ' ') return ' ';
+          if (currentRevealed.has(i)) return originalText[i];
+          return availableChars[Math.floor(Math.random() * availableChars.length)];
+        })
+        .join('');
+    },
+    [availableChars]
+  );
+
+  const computeOrder = useCallback(
+    len => {
+      const order = [];
+      if (len <= 0) return order;
+      if (revealDirection === 'start') {
+        for (let i = 0; i < len; i++) order.push(i);
+        return order;
+      }
+      if (revealDirection === 'end') {
+        for (let i = len - 1; i >= 0; i--) order.push(i);
+        return order;
+      }
+      const middle = Math.floor(len / 2);
+      let offset = 0;
+      while (order.length < len) {
+        if (offset % 2 === 0) {
+          const idx = middle + offset / 2;
+          if (idx >= 0 && idx < len) order.push(idx);
+        } else {
+          const idx = middle - Math.ceil(offset / 2);
+          if (idx >= 0 && idx < len) order.push(idx);
+        }
+        offset++;
+      }
+      return order.slice(0, len);
+    },
+    [revealDirection]
+  );
+
+  const fillAllIndices = useCallback(() => {
+    const s = new Set();
+    for (let i = 0; i < text.length; i++) s.add(i);
+    return s;
+  }, [text]);
+
+  const removeRandomIndices = useCallback((set, count) => {
+    const arr = Array.from(set);
+    for (let i = 0; i < count && arr.length > 0; i++) {
+      const idx = Math.floor(Math.random() * arr.length);
+      arr.splice(idx, 1);
+    }
+    return new Set(arr);
+  }, []);
+
+  const encryptInstantly = useCallback(() => {
+    const emptySet = new Set();
+    setRevealedIndices(emptySet);
+    setDisplayText(shuffleText(text, emptySet));
+    setIsDecrypted(false);
+  }, [text, shuffleText]);
+
+  const triggerDecrypt = useCallback(() => {
+    if (sequential) {
+      orderRef.current = computeOrder(text.length);
+      pointerRef.current = 0;
+      setRevealedIndices(new Set());
+    } else {
+      setRevealedIndices(new Set());
+    }
+    setDirection('forward');
+    setIsAnimating(true);
+  }, [sequential, computeOrder, text.length]);
+
+  const triggerReverse = useCallback(() => {
+    if (sequential) {
+      orderRef.current = computeOrder(text.length).slice().reverse();
+      pointerRef.current = 0;
+      setRevealedIndices(fillAllIndices());
+      setDisplayText(shuffleText(text, fillAllIndices()));
+    } else {
+      setRevealedIndices(fillAllIndices());
+      setDisplayText(shuffleText(text, fillAllIndices()));
+    }
+    setDirection('reverse');
+    setIsAnimating(true);
+  }, [sequential, computeOrder, fillAllIndices, shuffleText, text]);
+
+  useEffect(() => {
+    if (!isAnimating) return;
+    let currentIteration = 0;
+
+    const getNextIndex = revealedSet => {
+      const textLength = text.length;
+      switch (revealDirection) {
+        case 'start': return revealedSet.size;
+        case 'end': return textLength - 1 - revealedSet.size;
+        case 'center': {
+          const middle = Math.floor(textLength / 2);
+          const offset = Math.floor(revealedSet.size / 2);
+          const nextIndex = revealedSet.size % 2 === 0 ? middle + offset : middle - offset - 1;
+          if (nextIndex >= 0 && nextIndex < textLength && !revealedSet.has(nextIndex)) return nextIndex;
+          for (let i = 0; i < textLength; i++) if (!revealedSet.has(i)) return i;
+          return 0;
+        }
+        default: return revealedSet.size;
+      }
+    };
+
+    intervalRef.current = setInterval(() => {
+      setRevealedIndices(prevRevealed => {
+        if (sequential) {
+          if (direction === 'forward') {
+            if (prevRevealed.size < text.length) {
+              const nextIndex = getNextIndex(prevRevealed);
+              const newRevealed = new Set(prevRevealed);
+              newRevealed.add(nextIndex);
+              setDisplayText(shuffleText(text, newRevealed));
+              return newRevealed;
+            } else {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setIsDecrypted(true);
+              return prevRevealed;
+            }
+          }
+          if (direction === 'reverse') {
+            if (pointerRef.current < orderRef.current.length) {
+              const idxToRemove = orderRef.current[pointerRef.current++];
+              const newRevealed = new Set(prevRevealed);
+              newRevealed.delete(idxToRemove);
+              setDisplayText(shuffleText(text, newRevealed));
+              if (newRevealed.size === 0) {
+                clearInterval(intervalRef.current);
+                setIsAnimating(false);
+                setIsDecrypted(false);
+              }
+              return newRevealed;
+            } else {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setIsDecrypted(false);
+              return prevRevealed;
+            }
+          }
+        } else {
+          if (direction === 'forward') {
+            setDisplayText(shuffleText(text, prevRevealed));
+            currentIteration++;
+            if (currentIteration >= maxIterations) {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setDisplayText(text);
+              setIsDecrypted(true);
+            }
+            return prevRevealed;
+          }
+          if (direction === 'reverse') {
+            let currentSet = prevRevealed;
+            if (currentSet.size === 0) currentSet = fillAllIndices();
+            const removeCount = Math.max(1, Math.ceil(text.length / Math.max(1, maxIterations)));
+            const nextSet = removeRandomIndices(currentSet, removeCount);
+            setDisplayText(shuffleText(text, nextSet));
+            currentIteration++;
+            if (nextSet.size === 0 || currentIteration >= maxIterations) {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setIsDecrypted(false);
+              setDisplayText(shuffleText(text, new Set()));
+              return new Set();
+            }
+            return nextSet;
+          }
+        }
+        return prevRevealed;
+      });
+    }, speed);
+    return () => clearInterval(intervalRef.current);
+  }, [isAnimating, text, speed, maxIterations, sequential, revealDirection, shuffleText, direction, fillAllIndices, removeRandomIndices]);
+
+  const handleClick = () => {
+    if (animateOn !== 'click') return;
+    if (clickMode === 'once') {
+      if (isDecrypted) return;
+      setDirection('forward');
+      triggerDecrypt();
+    }
+    if (clickMode === 'toggle') {
+      if (isDecrypted) triggerReverse();
+      else {
+        setDirection('forward');
+        triggerDecrypt();
+      }
+    }
+  };
+
+  const triggerHoverDecrypt = useCallback(() => {
+    if (isAnimating) return;
+    setRevealedIndices(new Set());
+    setIsDecrypted(false);
+    setDisplayText(text);
+    setDirection('forward');
+    setIsAnimating(true);
+  }, [isAnimating, text]);
+
+  const resetToPlainText = useCallback(() => {
+    clearInterval(intervalRef.current);
+    setIsAnimating(false);
+    setRevealedIndices(new Set());
+    setDisplayText(text);
+    setIsDecrypted(true);
+    setDirection('forward');
+  }, [text]);
+
+  useEffect(() => {
+    if (animateOn !== 'view' && animateOn !== 'inViewHover') return;
+    const observerCallback = entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !hasAnimated) {
+          triggerDecrypt();
+          setHasAnimated(true);
+        }
+      });
+    };
+    const observer = new IntersectionObserver(observerCallback, { threshold: 0.1 });
+    const currentRef = containerRef.current;
+    if (currentRef) observer.observe(currentRef);
+    return () => { if (currentRef) observer.unobserve(currentRef); };
+  }, [animateOn, hasAnimated, triggerDecrypt]);
+
+  useEffect(() => {
+    if (animateOn === 'click') encryptInstantly();
+    else {
+      setDisplayText(text);
+      setIsDecrypted(true);
+    }
+    setRevealedIndices(new Set());
+    setDirection('forward');
+  }, [animateOn, text, encryptInstantly]);
+
+  const animateProps = animateOn === 'hover' || animateOn === 'inViewHover'
+    ? { onMouseEnter: triggerHoverDecrypt, onMouseLeave: resetToPlainText }
+    : animateOn === 'click' ? { onClick: handleClick } : {};
+
+  return (
+    <motion.span className={parentClassName} ref={containerRef} style={{ display: 'inline-block', whiteSpace: 'pre-wrap' }} {...animateProps} {...props}>
+      <span style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>{displayText}</span>
+      <span aria-hidden="true">
+        {displayText.split('').map((char, index) => {
+          const isRevealedOrDone = revealedIndices.has(index) || (!isAnimating && isDecrypted);
+          return (
+            <span key={index} className={isRevealedOrDone ? className : encryptedClassName}>
+              {char}
+            </span>
+          );
+        })}
+      </span>
+    </motion.span>
   );
 };
 
@@ -564,15 +862,24 @@ const App = () => {
               Fale agora com um de nossos instrutores e agende sua visita.
             </p>
           </div>
-          <motion.a 
-            href="#"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl"
-          >
-            <MessageCircle size={24} className="skew-x-12" />
-            <span className="skew-x-12">CHAMAR NO WHATSAPP</span>
-          </motion.a>
+            <Magnet padding={50} magnetStrength={5}>
+              <motion.a
+                href="#"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl shrink-0 group"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  size={20} 
+                  className="w-5 h-5 skew-x-12 group-hover:text-red-600 transition-colors fill-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                <span className="skew-x-12">CHAMAR NO WHATSAPP</span>
+              </motion.a>
+            </Magnet>
         </div>
       </section>
 
@@ -1422,30 +1729,45 @@ const App = () => {
 
       <footer className="bg-black border-t border-white/10 relative overflow-hidden">
         {/* Faixa superior vermelha com CTA */}
-        <div className="bg-red-600 py-10 relative overflow-hidden">
+        <div className="bg-red-600 py-12 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 flex items-center pointer-events-none select-none">
             <span className="text-8xl font-black italic uppercase whitespace-nowrap -ml-10">
               OSS • SILVA BROTHERS • OSS • SILVA BROTHERS •
             </span>
           </div>
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-            <div>
-              <h3 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter text-white">
-                PRONTO PARA COMEÇAR?
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div className="max-w-xl">
+              <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none mb-2">
+                <DecryptedText 
+                  text="PRONTO PARA O PRÓXIMO NÍVEL?" 
+                  animateOn="view"
+                  revealDirection="start"
+                  speed={40}
+                />
               </h3>
-              <p className="text-black/70 text-xs font-bold uppercase tracking-widest mt-1">
-                Primeira aula grátis. Sem compromisso.
+              <p className="text-black font-bold uppercase tracking-[0.2em] text-[10px] opacity-80">
+                Fale agora com um de nossos instrutores e agende sua visita.
               </p>
             </div>
-            <motion.a
-              href="#"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl shrink-0"
-            >
-              <MessageCircle size={20} className="skew-x-12" />
-              <span className="skew-x-12">FALAR NO WHATSAPP</span>
-            </motion.a>
+            
+            <Magnet padding={50} magnetStrength={5}>
+              <motion.a
+                href="#"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl shrink-0 group"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  size={20} 
+                  className="w-5 h-5 skew-x-12 group-hover:text-red-600 transition-colors fill-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                <span className="skew-x-12">CHAMAR NO WHATSAPP</span>
+              </motion.a>
+            </Magnet>
           </div>
         </div>
 
