@@ -44,7 +44,7 @@ import {
   TrendingUp,
   Crown
 } from 'lucide-react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useInView, useMotionValue, useTransform } from 'framer-motion';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -139,6 +139,79 @@ const GlitchText = ({ children, className = "", speed = 1 }) => (
     {children}
   </span>
 );
+
+// --- REACT BITS: Magnet ---
+const Magnet = ({ children, padding = 80, magnetStrength = 3 }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isActive, setIsActive] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!ref.current) return;
+      const { left, top, width, height } = ref.current.getBoundingClientRect();
+      const cx = left + width / 2;
+      const cy = top + height / 2;
+      const dx = Math.abs(cx - e.clientX);
+      const dy = Math.abs(cy - e.clientY);
+      if (dx < width / 2 + padding && dy < height / 2 + padding) {
+        setIsActive(true);
+        setPosition({ x: (e.clientX - cx) / magnetStrength, y: (e.clientY - cy) / magnetStrength });
+      } else {
+        setIsActive(false);
+        setPosition({ x: 0, y: 0 });
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [padding, magnetStrength]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <div
+        style={{
+          transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+          transition: isActive ? 'transform 0.2s ease-out' : 'transform 0.5s ease-in-out',
+          willChange: 'transform'
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// --- REACT BITS: TiltCard 3D ---
+const TiltCard = ({ children, className = '' }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotateX = useTransform(y, [-0.5, 0.5], [8, -8]);
+  const rotateY = useTransform(x, [-0.5, 0.5], [-8, 8]);
+
+  const handleMouseMove = (e) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    x.set((e.clientX - rect.left) / rect.width - 0.5);
+    y.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: 'preserve-3d', perspective: 800 }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -432,20 +505,45 @@ const App = () => {
         </div>
       </section>
 
-      {/* Pilares */}
+      {/* Pilares — TiltCard 3D + Magnet icons (React Bits) */}
       <section className="py-20 bg-black">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { t: 'DISCIPLINA', d: 'Foco total no processo.', i: <Target /> },
-            { t: 'RESPEITO', d: 'Base da nossa filosofia.', i: <Shield /> },
-            { t: 'UNIÃO', d: 'Crescemos como família.', i: <Users /> },
-            { t: 'EVOLUÇÃO', d: '1% melhor a cada dia.', i: <Flame /> }
+            { t: 'DISCIPLINA', d: 'Foco total no processo.', i: <Target size={28} />, num: '01' },
+            { t: 'RESPEITO',   d: 'Base da nossa filosofia.', i: <Shield size={28} />, num: '02' },
+            { t: 'UNIÃO',      d: 'Crescemos como família.', i: <Users size={28} />,  num: '03' },
+            { t: 'EVOLUÇÃO',   d: '1% melhor a cada dia.', i: <Flame size={28} />,  num: '04' }
           ].map((p, i) => (
-            <SpotlightCard key={i} className="p-8 border-white/5">
-              <div className="text-red-600 mb-6">{p.i}</div>
-              <h4 className="text-xl font-black italic mb-2 uppercase">{p.t}</h4>
-              <p className="text-zinc-500 text-xs uppercase tracking-widest">{p.d}</p>
-            </SpotlightCard>
+            <FadeIn key={i} delay={i * 0.12} direction="up">
+              <TiltCard className="h-full">
+                <SpotlightCard className="p-8 h-full flex flex-col justify-between border-white/5 group">
+                  {/* Número decorativo */}
+                  <span className="text-[3rem] font-black italic text-white/[0.04] leading-none select-none absolute top-4 right-4">
+                    {p.num}
+                  </span>
+
+                  {/* Ícone com Magnet */}
+                  <div className="mb-8">
+                    <Magnet padding={60} magnetStrength={4}>
+                      <div className="w-14 h-14 border border-red-600/30 bg-red-600/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 transition-all duration-500">
+                        {p.i}
+                      </div>
+                    </Magnet>
+                  </div>
+
+                  <div>
+                    {/* Linha decorativa */}
+                    <div className="h-[2px] w-8 bg-red-600 mb-4 group-hover:w-full transition-all duration-700" />
+                    <h4 className="text-2xl font-black italic uppercase tracking-tighter mb-2 group-hover:text-red-600 transition-colors duration-300">
+                      {p.t}
+                    </h4>
+                    <p className="text-zinc-500 text-xs uppercase tracking-widest leading-relaxed">
+                      {p.d}
+                    </p>
+                  </div>
+                </SpotlightCard>
+              </TiltCard>
+            </FadeIn>
           ))}
         </div>
       </section>
