@@ -1085,17 +1085,160 @@ const App = () => {
       </section>
 
 
-      <footer className="py-20 bg-black border-t border-white/10 text-center">
-        <div className="flex flex-col italic font-black mb-8">
-          <span className="text-3xl tracking-tighter">CT SILVA</span>
-          <span className="text-red-600 text-[12px] tracking-[0.4em] -mt-1">BROTHERS</span>
+      <footer className="bg-black border-t border-white/10 relative overflow-hidden">
+        {/* Faixa superior vermelha com CTA */}
+        <div className="bg-red-600 py-10 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 flex items-center pointer-events-none select-none">
+            <span className="text-8xl font-black italic uppercase whitespace-nowrap -ml-10">
+              OSS • SILVA BROTHERS • OSS • SILVA BROTHERS •
+            </span>
+          </div>
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+            <div>
+              <h3 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter text-white">
+                PRONTO PARA COMEÇAR?
+              </h3>
+              <p className="text-black/70 text-xs font-bold uppercase tracking-widest mt-1">
+                Primeira aula grátis. Sem compromisso.
+              </p>
+            </div>
+            <motion.a
+              href="#"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl shrink-0"
+            >
+              <MessageCircle size={20} className="skew-x-12" />
+              <span className="skew-x-12">FALAR NO WHATSAPP</span>
+            </motion.a>
+          </div>
         </div>
-        <div className="flex justify-center gap-6 mb-12">
-          <Instagram className="text-zinc-600 hover:text-white cursor-pointer" />
-          <Youtube className="text-zinc-600 hover:text-white cursor-pointer" />
-          <Facebook className="text-zinc-600 hover:text-white cursor-pointer" />
+
+        {/* Corpo principal do footer */}
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+
+            {/* Coluna 1: Logo e Descrição */}
+            <div className="lg:col-span-1">
+              <div className="flex flex-col leading-none italic font-black mb-6">
+                <span className="text-3xl tracking-tighter">CT SILVA</span>
+                <span className="text-red-600 text-[10px] tracking-[0.4em] -mt-1">BROTHERS</span>
+              </div>
+              <p className="text-zinc-500 text-xs leading-relaxed uppercase tracking-widest mb-8">
+                Forjando campeões em Campina Grande — PB. Jiu-Jitsu, Submission e Wrestling de elite.
+              </p>
+              <div className="flex gap-3">
+                {[
+                  { icon: <Instagram size={18} />, label: "Instagram" },
+                  { icon: <Youtube size={18} />, label: "YouTube" },
+                  { icon: <Facebook size={18} />, label: "Facebook" },
+                ].map((s, i) => (
+                  <motion.a
+                    key={i}
+                    href="#"
+                    aria-label={s.label}
+                    whileHover={{ scale: 1.1, y: -3 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-10 h-10 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white hover:border-red-600 hover:bg-red-600/10 transition-all duration-300"
+                  >
+                    {s.icon}
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+
+            {/* Coluna 2: Navegação */}
+            <div>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+                <div className="h-[2px] w-4 bg-red-600" />
+                Navegação
+              </h5>
+              <ul className="space-y-3">
+                {[
+                  { label: 'O Esporte', href: '#esporte' },
+                  { label: 'Modalidades', href: '#modalidades' },
+                  { label: 'A Academia', href: '#academia' },
+                  { label: 'Professor', href: '#professor' },
+                  { label: 'Loja', href: '#loja' },
+                  { label: 'Horários', href: '#agenda' },
+                  { label: 'Planos', href: '#planos' },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <a
+                      href={link.href}
+                      className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest hover:text-red-600 hover:pl-2 transition-all duration-300 flex items-center gap-2 group"
+                    >
+                      <ChevronRight size={10} className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Coluna 3: Modalidades */}
+            <div>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+                <div className="h-[2px] w-4 bg-red-600" />
+                Modalidades
+              </h5>
+              <ul className="space-y-3">
+                {['Jiu-Jitsu Kimono', 'No-Gi Grappling', 'Submission', 'Wrestling', 'Defesa Pessoal', 'Jiu-Jitsu Kids'].map((m) => (
+                  <li key={m}>
+                    <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1 h-1 bg-red-600 rounded-full" />
+                      {m}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Coluna 4: Contato */}
+            <div>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+                <div className="h-[2px] w-4 bg-red-600" />
+                Contato
+              </h5>
+              <ul className="space-y-5">
+                <li className="flex items-start gap-4">
+                  <MapPin size={16} className="text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="block text-white text-xs font-bold uppercase tracking-widest">Campina Grande, PB</span>
+                    <span className="text-zinc-600 text-[11px] font-normal">Rua do Treino, 123 — Centro</span>
+                  </div>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Phone size={16} className="text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="block text-white text-xs font-bold uppercase tracking-widest">(83) 98888-8888</span>
+                    <span className="text-zinc-600 text-[11px]">WhatsApp disponível</span>
+                  </div>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Clock size={16} className="text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="block text-white text-xs font-bold uppercase tracking-widest">Seg — Sex</span>
+                    <span className="text-zinc-600 text-[11px]">12h às 21h</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+          </div>
         </div>
-        <p className="text-[10px] font-bold text-zinc-800 uppercase tracking-[0.5em]">Campina Grande - Paraíba - Brasil</p>
+
+        {/* Barra de copyright */}
+        <div className="border-t border-white/5 py-6">
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">
+              © {new Date().getFullYear()} CT Silva Brothers. Todos os direitos reservados.
+            </p>
+            <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">
+              Campina Grande • Paraíba • Brasil
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
