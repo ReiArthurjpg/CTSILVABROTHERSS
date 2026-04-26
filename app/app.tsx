@@ -247,23 +247,140 @@ const App = () => {
       `}</style>
 
       {/* Navegação */}
-      <nav className={`fixed w-full z-50 transition-all duration-700 ${
-        scrolled ? 'bg-black/90 backdrop-blur-xl border-b border-white/10 py-3' : 'py-6'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <div className="flex flex-col leading-none italic font-black">
-            <span className="text-2xl tracking-tighter">CT SILVA</span>
-            <span className="text-red-600 text-[10px] tracking-[0.4em] -mt-1">BROTHERS</span>
-          </div>
-          <div className="hidden lg:flex items-center space-x-10">
-            {navLinks.map((link) => (
-              <a key={link.name} href={link.href} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">{link.name}</a>
+      <motion.nav
+        className={`fixed w-full z-50 transition-colors duration-700 ${
+          scrolled ? 'bg-black/95 backdrop-blur-xl' : 'bg-transparent'
+        }`}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Linha inferior animada */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-600 to-transparent"
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: scrolled ? 1 : 0, opacity: scrolled ? 1 : 0 }}
+          transition={{ duration: 0.5 }}
+          style={{ width: '100%', transformOrigin: 'center' }}
+        />
+
+        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center py-4">
+          
+          {/* Logo */}
+          <motion.a
+            href="#"
+            className="flex items-center gap-3 group"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="w-8 h-8 bg-red-600 flex items-center justify-center -skew-x-6 group-hover:bg-white transition-colors duration-300">
+              <Shield size={16} className="text-white group-hover:text-black transition-colors duration-300 skew-x-6" />
+            </div>
+            <div className="flex flex-col leading-none italic font-black">
+              <span className="text-xl tracking-tighter">CT SILVA</span>
+              <span className="text-red-600 text-[9px] tracking-[0.4em] -mt-0.5">BROTHERS</span>
+            </div>
+          </motion.a>
+
+          {/* Links Desktop */}
+          <div className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link, i) => (
+              <motion.a
+                key={link.name}
+                href={link.href}
+                className="relative text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors duration-300 py-1 group"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 + i * 0.05 }}
+              >
+                {link.name}
+                {/* Underline animado */}
+                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-red-600 group-hover:w-full transition-all duration-300" />
+              </motion.a>
             ))}
-            <button className="bg-red-600 px-6 py-3 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 hover:bg-white hover:text-black transition-all">AULA GRÁTIS</button>
+
+            {/* Separador */}
+            <div className="h-4 w-[1px] bg-white/10" />
+
+            {/* Botão CTA */}
+            <motion.button
+              className="relative bg-red-600 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden group"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <span className="absolute cursor-pointer inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <span className="relative cursor-pointer z-10 text-white group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2">
+                <Flame size={12} className="skew-x-12" />
+                AULA GRÁTIS
+              </span>
+            </motion.button>
           </div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden text-red-600"><Menu size={24} /></button>
+
+          {/* Botão Mobile */}
+          <motion.button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
+            whileTap={{ scale: 0.9 }}
+          >
+            <motion.span
+              className="w-6 h-[2px] bg-white block"
+              animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
+              transition={{ duration: 0.3 }}
+            />
+            <motion.span
+              className="w-6 h-[2px] bg-red-600 block"
+              animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
+              transition={{ duration: 0.3 }}
+            />
+            <motion.span
+              className="w-6 h-[2px] bg-white block"
+              animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
+              transition={{ duration: 0.3 }}
+            />
+          </motion.button>
         </div>
-      </nav>
+
+        {/* Menu Mobile */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:hidden overflow-hidden bg-black/98 border-t border-white/10"
+            >
+              <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-4">
+                {navLinks.map((link, i) => (
+                  <motion.a
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-red-600 transition-colors py-2 border-b border-white/5 flex items-center justify-between group"
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    {link.name}
+                    <ChevronRight size={14} className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </motion.a>
+                ))}
+                <motion.button
+                  className="mt-4 bg-red-600 w-full py-4 font-black text-sm uppercase tracking-widest italic -skew-x-6 hover:bg-white hover:text-black transition-all"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  AULA GRÁTIS
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
 
       {/* Hero */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
