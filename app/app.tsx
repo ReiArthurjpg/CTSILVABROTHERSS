@@ -273,9 +273,6 @@ const App = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="w-8 h-8 bg-red-600 flex items-center justify-center -skew-x-6 group-hover:bg-white transition-colors duration-300">
-              <Shield size={16} className="text-white group-hover:text-black transition-colors duration-300 skew-x-6" />
-            </div>
             <div className="flex flex-col leading-none italic font-black">
               <span className="text-xl tracking-tighter">CT SILVA</span>
               <span className="text-red-600 text-[9px] tracking-[0.4em] -mt-0.5">BROTHERS</span>
