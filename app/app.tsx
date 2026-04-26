@@ -100,6 +100,46 @@ const FadeIn = ({ children, delay = 0, direction = "up" }) => {
   );
 };
 
+// --- REACT BITS: SplitText (Framer Motion) ---
+const SplitText = ({ text, className = "", baseDelay = 0, charDelay = 0.04 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+  const chars = text.split('');
+  return (
+    <span ref={ref} className={`inline-block ${className}`} aria-label={text}>
+      {chars.map((char, i) => (
+        <motion.span
+          key={i}
+          className="inline-block"
+          initial={{ opacity: 0, y: 80, rotateX: -90 }}
+          animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+          transition={{
+            duration: 0.9,
+            delay: baseDelay + i * charDelay,
+            ease: [0.16, 1, 0.3, 1]
+          }}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </motion.span>
+      ))}
+    </span>
+  );
+};
+
+// --- REACT BITS: GlitchText (CSS pseudo-element) ---
+const GlitchText = ({ children, className = "", speed = 1 }) => (
+  <span
+    className={`glitch-hero ${className}`}
+    data-text={children}
+    style={{
+      '--ga-dur': `${speed * 3}s`,
+      '--gb-dur': `${speed * 2}s`,
+    } as React.CSSProperties}
+  >
+    {children}
+  </span>
+);
+
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -147,6 +187,63 @@ const App = () => {
         .animate-marquee {
           animation: marquee 20s linear infinite;
         }
+
+        /* === REACT BITS: GlitchText === */
+        .glitch-hero {
+          position: relative;
+          display: inline-block;
+          -webkit-text-stroke: 1px rgba(220, 38, 38, 0.5);
+          color: transparent;
+        }
+        .glitch-hero::after,
+        .glitch-hero::before {
+          content: attr(data-text);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: black;
+          -webkit-text-stroke: 1px rgba(220, 38, 38, 0.5);
+          color: transparent;
+          overflow: hidden;
+        }
+        .glitch-hero::after {
+          left: 3px;
+          text-shadow: -3px 0 rgba(220, 38, 38, 0.9);
+          animation: glitch-a var(--ga-dur, 3.5s) infinite linear alternate-reverse;
+        }
+        .glitch-hero::before {
+          left: -3px;
+          text-shadow: 3px 0 rgba(0, 180, 255, 0.35);
+          animation: glitch-b var(--gb-dur, 2.5s) infinite linear alternate-reverse;
+        }
+        @keyframes glitch-a {
+          0%   { clip-path: inset(22% 0 62% 0); }
+          10%  { clip-path: inset(8%  0 78% 0); }
+          20%  { clip-path: inset(45% 0 40% 0); }
+          30%  { clip-path: inset(2%  0 85% 0); }
+          40%  { clip-path: inset(30% 0 55% 0); }
+          50%  { clip-path: inset(60% 0 18% 0); }
+          60%  { clip-path: inset(15% 0 72% 0); }
+          70%  { clip-path: inset(50% 0 35% 0); }
+          80%  { clip-path: inset(5%  0 80% 0); }
+          90%  { clip-path: inset(70% 0 10% 0); }
+          100% { clip-path: inset(35% 0 50% 0); }
+        }
+        @keyframes glitch-b {
+          0%   { clip-path: inset(65% 0 10% 0); }
+          10%  { clip-path: inset(80% 0 5%  0); }
+          20%  { clip-path: inset(40% 0 35% 0); }
+          30%  { clip-path: inset(75% 0 8%  0); }
+          40%  { clip-path: inset(20% 0 60% 0); }
+          50%  { clip-path: inset(55% 0 28% 0); }
+          60%  { clip-path: inset(88% 0 2%  0); }
+          70%  { clip-path: inset(30% 0 50% 0); }
+          80%  { clip-path: inset(62% 0 18% 0); }
+          90%  { clip-path: inset(10% 0 70% 0); }
+          100% { clip-path: inset(48% 0 30% 0); }
+        }
       `}</style>
 
       {/* Navegação */}
@@ -175,15 +272,41 @@ const App = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-          <FadeIn direction="up">
-            <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4">Campina Grande • PB</span>
-            <h1 className="text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8">
-              FORJANDO <br />
-              <span className="text-stroke-red">CAMPEÕES</span>
-            </h1>
-            <div className="h-1 w-24 bg-red-600 mb-8" />
-            <p className="text-zinc-400 max-w-xl text-lg md:text-xl font-light">Equipe Silva Brothers: Onde a técnica encontra a resiliência. Venha treinar no CT mais autêntico da região.</p>
-          </FadeIn>
+          <motion.span
+            className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Campina Grande • PB
+          </motion.span>
+
+          <h1 className="text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden">
+            <SplitText
+              text="FORJANDO"
+              className="block"
+              baseDelay={0.4}
+              charDelay={0.055}
+            />
+            <GlitchText speed={1.2}>
+              CAMPEÕES
+            </GlitchText>
+          </h1>
+
+          <motion.div
+            className="h-1 bg-red-600 mb-8"
+            initial={{ width: 0 }}
+            animate={{ width: 96 }}
+            transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          />
+          <motion.p
+            className="text-zinc-400 max-w-xl text-lg md:text-xl font-light"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Equipe Silva Brothers: Onde a técnica encontra a resiliência. Venha treinar no CT mais autêntico da região.
+          </motion.p>
         </div>
 
         {/* Scroll Indicator */}
