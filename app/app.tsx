@@ -967,7 +967,124 @@ const App = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* --- SEÇÃO: DEPOIMENTOS / PROVA SOCIAL --- */}
+      <section className="py-32 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+        {/* Background decorativo */}
+        <div className="absolute inset-0 pointer-events-none select-none opacity-[0.025]">
+          <div className="flex items-center h-full">
+            <span className="text-[20rem] font-black italic uppercase whitespace-nowrap">
+              OSS • OSS • OSS •
+            </span>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <FadeIn direction="up">
+            <div className="text-center mb-20">
+              <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">
+                Prova Social
+              </span>
+              <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+                O QUE DIZEM OS <span className="text-red-600">ALUNOS</span>
+              </h2>
+              <div className="flex items-center justify-center gap-4">
+                <div className="h-[1px] w-16 bg-red-600/50" />
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={16} className="text-red-600 fill-red-600" />
+                  ))}
+                </div>
+                <div className="h-[1px] w-16 bg-red-600/50" />
+              </div>
+            </div>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                nome: "Misael Almeida",
+                texto: "O melhor CT que já treinei, mestre Felipe além de saber muito, sabe passar perfeitamente o conteúdo aos alunos. Se vc quer aprender jiu-jitsu o lugar é esse.",
+                inicial: "M"
+              },
+              {
+                nome: "Telmo Petrucci",
+                texto: "CT de altíssima qualidade, ensinando o Jiu-Jitsu raiz!!!",
+                inicial: "T"
+              },
+              {
+                nome: "José Antoniel",
+                texto: "Melhor academia de jiu-jitsu de CG.",
+                inicial: "J"
+              },
+              {
+                nome: "Dayvison Alexandre",
+                texto: "Centro de treinamento melhor da cidade. Oss!",
+                inicial: "D"
+              },
+              {
+                nome: "Davi Simoes",
+                texto: "Excelente academia de artes marciais.",
+                inicial: "D"
+              }
+            ].map((dep, i) => (
+              <FadeIn key={i} delay={i * 0.1} direction="up">
+                <SpotlightCard className="p-8 flex flex-col h-full group hover:bg-zinc-900 transition-all duration-500">
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-6">
+                    {[...Array(5)].map((_, s) => (
+                      <Star key={s} size={14} className="text-red-600 fill-red-600" />
+                    ))}
+                  </div>
+
+                  {/* Aspas */}
+                  <Quote size={24} className="text-red-600/30 mb-4 group-hover:text-red-600/60 transition-colors" />
+
+                  {/* Texto */}
+                  <p className="text-zinc-400 text-sm leading-relaxed italic flex-1 group-hover:text-zinc-300 transition-colors">
+                    "{dep.texto}"
+                  </p>
+
+                  {/* Divisor */}
+                  <div className="h-[1px] bg-white/5 my-6 group-hover:bg-red-600/30 transition-colors" />
+
+                  {/* Autor */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-600 font-black italic text-sm group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
+                      {dep.inicial}
+                    </div>
+                    <div>
+                      <span className="block text-white font-black italic uppercase tracking-tighter text-sm">{dep.nome}</span>
+                      <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Aluno CT Silva Brothers</span>
+                    </div>
+                  </div>
+                </SpotlightCard>
+              </FadeIn>
+            ))}
+
+            {/* Card de CTA */}
+            <FadeIn delay={0.5} direction="up">
+              <div className="relative h-full overflow-hidden group border border-red-600/20 bg-red-600/5 hover:bg-red-600 transition-all duration-700 cursor-pointer p-8 flex flex-col justify-between">
+                <div className="absolute -bottom-8 -right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Shield size={160} />
+                </div>
+                <div>
+                  <span className="text-red-600 group-hover:text-white font-black italic uppercase tracking-[0.3em] text-[10px] block mb-4 transition-colors">Sua história começa aqui</span>
+                  <h4 className="text-3xl font-black italic uppercase leading-tight tracking-tighter group-hover:text-white transition-colors">
+                    SEJA O PRÓXIMO <span className="text-red-600 group-hover:text-white">CASE</span> DE SUCESSO
+                  </h4>
+                </div>
+                <div className="mt-8 flex items-center gap-3 text-zinc-500 group-hover:text-white transition-colors font-black italic uppercase text-[10px] tracking-widest">
+                  <MessageCircle size={16} />
+                  AGENDAR AULA GRÁTIS
+                  <ArrowRight size={16} />
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+
+
       <footer className="py-20 bg-black border-t border-white/10 text-center">
         <div className="flex flex-col italic font-black mb-8">
           <span className="text-3xl tracking-tighter">CT SILVA</span>
