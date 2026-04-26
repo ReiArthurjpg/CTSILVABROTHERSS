@@ -312,6 +312,53 @@ const App = () => {
                       </button>
                     </motion.div>
                   </div>
+                  <div className="mt-12 grid grid-cols-2 gap-8 border-t border-white/5 pt-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full border border-red-600/30 flex items-center justify-center text-red-600 bg-red-600/5 group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
+                        <Shield size={20} />
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Ambiente</span>
+                        <span className="block text-sm font-bold uppercase italic text-white">Seguro & Profissional</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full border border-red-600/30 flex items-center justify-center text-red-600 bg-red-600/5 group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
+                        <Users size={20} />
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Comunidade</span>
+                        <span className="block text-sm font-bold uppercase italic text-white">União & Respeito</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Citação do Mestre */}
+                  <div className="mt-12 p-8 bg-zinc-900/50 border border-white/5 relative group overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-red-600/20 transition-all duration-700"></div>
+                    <Quote className="text-red-600 mb-4 opacity-50" size={32} />
+                    <p className="text-zinc-400 italic text-lg leading-relaxed mb-6">
+                      "A união da nossa equipe é o que nos torna invencíveis. No tatame, somos um só corpo, uma só mente."
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="h-[1px] w-8 bg-red-600"></div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Linhagem Silva Brothers</span>
+                    </div>
+                  </div>
+
+                  {/* Mini Stats */}
+                  <div className="mt-8 grid grid-cols-3 gap-4">
+                    {[
+                      { label: 'Treinos / Sem', val: '20+' },
+                      { label: 'Alunos Ativos', val: '150+' },
+                      { label: 'Graduados', val: '40+' }
+                    ].map((stat, i) => (
+                      <div key={i} className="text-center p-6 border border-white/5 bg-white/5 group-hover:border-red-600/30 transition-colors">
+                        <span className="block text-2xl font-black italic text-red-600 mb-1">{stat.val}</span>
+                        <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </FadeIn>
             </div>
@@ -440,37 +487,7 @@ const App = () => {
             ))}
           </div>
 
-          {/* Galeria Grid */}
-          <div className="mt-32 grid grid-cols-12 gap-4 h-[600px]">
-            <div className="col-span-12 md:col-span-7 h-full bg-zinc-900 border border-white/5 overflow-hidden group">
-              <div className="w-full h-full relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1590502160462-09971842820b?q=80&w=1600" 
-                  className="w-full h-full object-cover grayscale opacity-40 group-hover:opacity-80 transition-all duration-1000"
-                  alt="Estrutura rústica"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
-                <div className="absolute bottom-8 left-8">
-                  <span className="bg-red-600 px-4 py-1 text-[10px] font-black italic uppercase tracking-widest">O Templo</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-span-12 md:col-span-5 grid grid-rows-2 gap-4">
-              <div className="bg-zinc-900 border border-white/5 overflow-hidden group relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1000" 
-                  className="w-full h-full object-cover grayscale opacity-40 group-hover:opacity-80 transition-all duration-700"
-                  alt="Treino pesado"
-                />
-              </div>
-              <div className="bg-zinc-900 border border-white/5 p-8 flex flex-col justify-center">
-                <span className="text-red-600 font-black italic text-4xl mb-4">RAIZ.</span>
-                <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] leading-loose">
-                  Nascido no tijolo, forjado no suor. Onde a tradição encontra a técnica em Campina Grande.
-                </p>
-              </div>
-            </div>
-          </div>
+
         </div>
       </section>
 
@@ -490,8 +507,8 @@ const App = () => {
                   <div className="absolute -inset-4 border border-red-600/30 -z-10 translate-x-4 translate-y-4 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
                   <div className="aspect-[3/4] bg-zinc-900 overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 relative">
                     <img 
-                      src="https://images.unsplash.com/photo-1552072047-399363238d71?q=80&w=1000" 
-                      className="w-full h-full object-cover object-top opacity-80"
+                      src="/images/professor-felipe.jpg" 
+                      className="w-full h-full object-cover object-center opacity-90"
                       alt="Professor Felipe Silva"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
