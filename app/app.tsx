@@ -525,12 +525,32 @@ const App = () => {
     { name: 'O Esporte', href: '#esporte' },
     { name: 'Modalidades', href: '#modalidades' },
     { name: 'A Academia', href: '#academia' },
+    { name: 'Diferenciais', href: '#diferenciais' },
     { name: 'Professor', href: '#professor' },
     { name: 'Loja', href: '#loja' },
     { name: 'Horários', href: '#agenda' },
     { name: 'Planos', href: '#planos' },
     { name: 'Contato', href: '#agenda' },
   ];
+
+  const scrollToSection = (e, href) => {
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.replace('#', '');
+      const elem = document.getElementById(targetId);
+      if (elem) {
+        const offset = 80; 
+        const elementPosition = elem.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+      setIsMenuOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 selection:text-white overflow-x-hidden">
@@ -542,6 +562,9 @@ const App = () => {
         .text-stroke-red {
           -webkit-text-stroke: 1px rgba(220, 38, 38, 0.5);
           color: transparent;
+        }
+        html {
+          scroll-behavior: smooth;
         }
         @keyframes vertical-slide {
           0% { transform: translateY(0); opacity: 0; }
@@ -656,6 +679,7 @@ const App = () => {
               <motion.a
                 key={link.name}
                 href={link.href}
+                onClick={(e) => scrollToSection(e, link.href)}
                 className="relative text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors duration-300 py-1 group"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -726,7 +750,7 @@ const App = () => {
                   <motion.a
                     key={link.name}
                     href={link.href}
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={(e) => scrollToSection(e, link.href)}
                     className="text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-red-600 transition-colors py-2 border-b border-white/5 flex items-center justify-between group"
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
