@@ -1388,12 +1388,14 @@ const App = () => {
             {/* Coluna Horários */}
             <FadeIn direction="right">
               <div className="relative">
-                <div className="inline-block bg-red-600 text-white px-4 py-1 font-black italic text-[10px] uppercase tracking-[0.3em] mb-6">
-                  Check the Schedule
-                </div>
                 <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-[0.85] mb-12">
                   TREINOS <br />
-                  <span className="text-stroke-red">DIÁRIOS</span>
+                  <SplitText
+                    text="DIÁRIOS"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.08}
+                  />
                 </h2>
 
                 <div className="border-t-2 border-red-600 pt-8">
@@ -1493,10 +1495,14 @@ const App = () => {
           <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
             <FadeIn direction="right">
               <div>
-                <span className="text-red-600 font-black italic tracking-[0.6em] text-xs uppercase block mb-4">Pricing Strategy</span>
                 <h2 className="text-6xl md:text-9xl font-black italic uppercase tracking-tighter leading-[0.8] mb-4">
                   ESCOLHA <br />
-                  <span className="text-stroke-red">SEU PLANO</span>
+                  <SplitText
+                    text="SEU PLANO"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.05}
+                  />
                 </h2>
                 <div className="h-2 w-40 bg-red-600"></div>
               </div>
@@ -1601,7 +1607,7 @@ const App = () => {
                     </div>
                     <div className="text-center md:text-left">
                       <h3 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-2">
-                        TESTE SUA <span className="text-stroke-red group-hover:text-white">FORÇA</span>
+                        TESTE SUA <SplitText text="FORÇA" className="text-red-600 group-hover:text-white transition-colors" baseDelay={0.2} />
                       </h3>
                       <p className="text-zinc-500 group-hover:text-black font-black italic uppercase text-xs tracking-[0.3em] transition-colors duration-700">
                         Primeira aula é por nossa conta. Sinta o peso do tatame.
