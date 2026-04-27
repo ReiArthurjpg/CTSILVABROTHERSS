@@ -1328,6 +1328,104 @@ const App = () => {
         </div>
       </section>
 
+      {/* --- SEÇÃO: DIFERENCIAIS --- */}
+      <section id="diferenciais" className="py-40 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+        {/* Background Decorativo */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/5 blur-[120px] -z-10" />
+        <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-red-600/5 blur-[100px] -z-10" />
+
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <FadeIn direction="up">
+            <div className="mb-24">
+              <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Por que treinar conosco?</span>
+              <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+                NOSSOS <br />
+                <SplitText text="DIFERENCIAIS" className="text-red-600" baseDelay={0.3} />
+              </h2>
+              <div className="h-1 w-24 bg-red-600" />
+            </div>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Tecnologia e Acompanhamento */}
+            <FadeIn delay={0.1}>
+              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
+                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+                  <Zap size={28} className="skew-x-12" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Ecosistema Digital</h3>
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-relaxed mb-8">Gestão moderna para sua evolução constante.</p>
+                  <ul className="space-y-5">
+                    {[
+                      "Agendamento de aulas via App",
+                      "App exclusivo do aluno",
+                      "Sistema de acompanhamento técnico",
+                      "Integração entre modalidades"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+                        <CheckCircle2 size={16} className="text-red-600 shrink-0" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </SpotlightCard>
+            </FadeIn>
+
+            {/* Qualidade de Ensino */}
+            <FadeIn delay={0.2}>
+              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
+                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+                  <Award size={28} className="skew-x-12" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Metodologia Silva</h3>
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-relaxed mb-8">Saber ensinar é a nossa maior graduação.</p>
+                  <ul className="space-y-5">
+                    {[
+                      "Aulas 100% estruturadas",
+                      "Didática específica para iniciantes",
+                      "Atenção individual no tatame",
+                      "Linhagem e histórico comprovados"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+                        <CheckCircle2 size={16} className="text-red-600 shrink-0" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </SpotlightCard>
+            </FadeIn>
+
+            {/* Público Alvo */}
+            <FadeIn delay={0.3}>
+              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
+                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+                  <Target size={28} className="skew-x-12" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Para todos os perfis</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { t: "Infantil", e: "👶" },
+                      { t: "Competição", e: "🏆" },
+                      { t: "Defesa Pessoal", e: "🛡️" },
+                      { t: "Hobby / Saúde", e: "🧘" }
+                    ].map((p, i) => (
+                      <div key={i} className="bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-2 hover:bg-red-600/10 hover:border-red-600/50 transition-all cursor-default">
+                        <span className="text-2xl mb-1">{p.e}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-300 text-center">{p.t}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </SpotlightCard>
+            </FadeIn>
+
+          </div>
+        </div>
+      </section>
+
       {/* --- SEÇÃO: REDES SOCIAIS (FAIXA) --- */}
       <section className="bg-zinc-900 border-y border-white/10 py-16 relative overflow-hidden">
         {/* Marquee Background */}
