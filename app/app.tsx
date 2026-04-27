@@ -773,9 +773,12 @@ const App = () => {
               baseDelay={0.4}
               charDelay={0.055}
             />
-            <GlitchText speed={1.2}>
-              CAMPEÕES
-            </GlitchText>
+            <SplitText
+              text="CAMPEÕES"
+              className="block text-red-600"
+              baseDelay={0.8}
+              charDelay={0.06}
+            />
           </h1>
 
           <motion.div
@@ -901,10 +904,6 @@ const App = () => {
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-0">
             <div className="lg:col-span-6 lg:pt-20 relative z-20">
               <FadeIn direction="right">
-                <div className="inline-block bg-red-600 text-white px-4 py-1 font-black italic text-[10px] uppercase tracking-[0.3em] mb-8">
-                  Filosofia Silva Brothers
-                </div>
-                
                 <h2 className="text-6xl md:text-[8rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A FORÇA DO <br />
                   <span className="text-red-600">COLETIVO</span>
@@ -1078,11 +1077,16 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row items-end justify-between mb-24 gap-10">
             <FadeIn direction="right">
-              <div className="max-w-2xl">
+              <div className="max-w-4xl">
                 <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Ambiente Old School</span>
-                <h2 className="text-6xl md:text-8xl font-black uppercase italic leading-[0.8] tracking-tighter">
+                <h2 className="text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter">
                   NOSSO <br />
-                  <span className="text-stroke-red">CENTRO DE TREINO</span>
+                  <SplitText
+                    text="CENTRO DE TREINO"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.04}
+                  />
                 </h2>
               </div>
             </FadeIn>
@@ -1166,10 +1170,14 @@ const App = () => {
             {/* Informações do Professor */}
             <div className="lg:col-span-7">
               <FadeIn direction="left">
-                <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Liderança Técnica</span>
                 <h2 className="text-5xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A MENTE POR TRÁS <br />
-                  <span className="text-stroke-red">DO TATAME</span>
+                  <SplitText
+                    text="DO TATAME"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.05}
+                  />
                 </h2>
 
                 <div className="space-y-8">
@@ -1249,7 +1257,7 @@ const App = () => {
               </div>
             </FadeIn>
             <FadeIn direction="left">
-               <button className="mt-8 md:mt-0 flex items-center gap-4 bg-white text-black px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-red-600 hover:text-white transition-all">
+               <button disabled className="mt-8 md:mt-0 flex items-center gap-4 bg-white text-black px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 opacity-50 cursor-not-allowed transition-all">
                 <ShoppingBag size={20} />
                 VISITAR E-COMMERCE
               </button>
@@ -1279,25 +1287,32 @@ const App = () => {
             ].map((prod, i) => (
               <FadeIn key={i} delay={i * 0.2}>
                 <div className="group relative">
-                  <div className="aspect-[4/5] bg-zinc-900 border border-white/5 overflow-hidden relative">
+                  {/* OVERLAY EM DESENVOLVIMENTO */}
+                  <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+                    <div className="bg-red-600 text-white px-6 py-3 font-black italic uppercase tracking-widest text-sm -skew-x-12 shadow-2xl">
+                      <span className="skew-x-12 block">EM DESENVOLVIMENTO</span>
+                    </div>
+                  </div>
+
+                  <div className="aspect-[4/5] bg-zinc-900 border border-white/5 overflow-hidden relative pointer-events-none">
                     <div className="absolute top-4 left-4 z-20">
-                      <span className="bg-red-600 text-white text-[8px] font-black uppercase px-2 py-1 tracking-widest italic">
+                      <span className="bg-red-600 text-white text-[8px] font-black uppercase px-2 py-1 tracking-widest italic opacity-50">
                         {prod.tag}
                       </span>
                     </div>
                     <img 
                       src={prod.img} 
-                      className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-110 transition-all duration-700"
+                      className="w-full h-full object-cover grayscale brightness-50"
                       alt={prod.name}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
-                    <div className="absolute bottom-6 left-6 right-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                       <button className="w-full bg-white text-black py-4 font-black italic uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                    <div className="absolute bottom-6 left-6 right-6">
+                       <button disabled className="w-full bg-white/10 text-white/50 py-4 font-black italic uppercase text-xs tracking-widest flex items-center justify-center gap-2">
                         <Tag size={14} /> ADICIONAR AO CARRINHO
                       </button>
                     </div>
                   </div>
-                  <div className="mt-6 flex justify-between items-start">
+                  <div className="mt-6 flex justify-between items-start opacity-50 pointer-events-none">
                     <div>
                       <h4 className="text-xl font-black italic uppercase tracking-tighter mb-1">{prod.name}</h4>
                       <p className="text-red-600 font-black italic tracking-widest text-sm">{prod.price}</p>
