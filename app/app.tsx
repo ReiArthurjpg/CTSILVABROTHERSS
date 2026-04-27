@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Shield, 
   Users, 
@@ -44,7 +44,7 @@ import {
   TrendingUp,
   Crown
 } from 'lucide-react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useInView, useMotionValue, useTransform } from 'framer-motion';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -100,6 +100,417 @@ const FadeIn = ({ children, delay = 0, direction = "up" }) => {
   );
 };
 
+// --- REACT BITS: SplitText (Framer Motion) ---
+const SplitText = ({ text, className = "", baseDelay = 0, charDelay = 0.04 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+  const chars = text.split('');
+  return (
+    <span ref={ref} className={`inline-block ${className}`} aria-label={text}>
+      {chars.map((char, i) => (
+        <motion.span
+          key={i}
+          className="inline-block"
+          initial={{ opacity: 0, y: 80, rotateX: -90 }}
+          animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+          transition={{
+            duration: 0.9,
+            delay: baseDelay + i * charDelay,
+            ease: [0.16, 1, 0.3, 1]
+          }}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </motion.span>
+      ))}
+    </span>
+  );
+};
+
+// --- REACT BITS: GlitchText (CSS pseudo-element) ---
+const GlitchText = ({ children, className = "", speed = 1 }) => (
+  <span
+    className={`glitch-hero ${className}`}
+    data-text={children}
+    style={{
+      '--ga-dur': `${speed * 3}s`,
+      '--gb-dur': `${speed * 2}s`,
+    } as React.CSSProperties}
+  >
+    {children}
+  </span>
+);
+
+// --- REACT BITS: Magnet ---
+const Magnet = ({ children, padding = 80, magnetStrength = 3 }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isActive, setIsActive] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!ref.current) return;
+      const { left, top, width, height } = ref.current.getBoundingClientRect();
+      const cx = left + width / 2;
+      const cy = top + height / 2;
+      const dx = Math.abs(cx - e.clientX);
+      const dy = Math.abs(cy - e.clientY);
+      if (dx < width / 2 + padding && dy < height / 2 + padding) {
+        setIsActive(true);
+        setPosition({ x: (e.clientX - cx) / magnetStrength, y: (e.clientY - cy) / magnetStrength });
+      } else {
+        setIsActive(false);
+        setPosition({ x: 0, y: 0 });
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [padding, magnetStrength]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <div
+        style={{
+          transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+          transition: isActive ? 'transform 0.2s ease-out' : 'transform 0.5s ease-in-out',
+          willChange: 'transform'
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// --- REACT BITS: TiltCard 3D ---
+const TiltCard = ({ children, className = '' }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotateX = useTransform(y, [-0.5, 0.5], [8, -8]);
+  const rotateY = useTransform(x, [-0.5, 0.5], [-8, 8]);
+
+  const handleMouseMove = (e) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    x.set((e.clientX - rect.left) / rect.width - 0.5);
+    y.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: 'preserve-3d', perspective: 800 }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// --- REACT BITS: DecryptedText ---
+const DecryptedText = ({
+  text,
+  speed = 50,
+  maxIterations = 10,
+  sequential = false,
+  revealDirection = 'start',
+  useOriginalCharsOnly = false,
+  characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+',
+  className = '',
+  parentClassName = '',
+  encryptedClassName = '',
+  animateOn = 'hover',
+  clickMode = 'once',
+  ...props
+}) => {
+  const [displayText, setDisplayText] = useState(text);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState(new Set());
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [isDecrypted, setIsDecrypted] = useState(animateOn !== 'click');
+  const [direction, setDirection] = useState('forward');
+
+  const containerRef = useRef(null);
+  const orderRef = useRef([]);
+  const pointerRef = useRef(0);
+  const intervalRef = useRef(null);
+
+  const availableChars = useMemo(() => {
+    return useOriginalCharsOnly
+      ? Array.from(new Set(text.split(''))).filter(char => char !== ' ')
+      : characters.split('');
+  }, [useOriginalCharsOnly, text, characters]);
+
+  const shuffleText = useCallback(
+    (originalText, currentRevealed) => {
+      return originalText
+        .split('')
+        .map((char, i) => {
+          if (char === ' ') return ' ';
+          if (currentRevealed.has(i)) return originalText[i];
+          return availableChars[Math.floor(Math.random() * availableChars.length)];
+        })
+        .join('');
+    },
+    [availableChars]
+  );
+
+  const computeOrder = useCallback(
+    len => {
+      const order = [];
+      if (len <= 0) return order;
+      if (revealDirection === 'start') {
+        for (let i = 0; i < len; i++) order.push(i);
+        return order;
+      }
+      if (revealDirection === 'end') {
+        for (let i = len - 1; i >= 0; i--) order.push(i);
+        return order;
+      }
+      const middle = Math.floor(len / 2);
+      let offset = 0;
+      while (order.length < len) {
+        if (offset % 2 === 0) {
+          const idx = middle + offset / 2;
+          if (idx >= 0 && idx < len) order.push(idx);
+        } else {
+          const idx = middle - Math.ceil(offset / 2);
+          if (idx >= 0 && idx < len) order.push(idx);
+        }
+        offset++;
+      }
+      return order.slice(0, len);
+    },
+    [revealDirection]
+  );
+
+  const fillAllIndices = useCallback(() => {
+    const s = new Set();
+    for (let i = 0; i < text.length; i++) s.add(i);
+    return s;
+  }, [text]);
+
+  const removeRandomIndices = useCallback((set, count) => {
+    const arr = Array.from(set);
+    for (let i = 0; i < count && arr.length > 0; i++) {
+      const idx = Math.floor(Math.random() * arr.length);
+      arr.splice(idx, 1);
+    }
+    return new Set(arr);
+  }, []);
+
+  const encryptInstantly = useCallback(() => {
+    const emptySet = new Set();
+    setRevealedIndices(emptySet);
+    setDisplayText(shuffleText(text, emptySet));
+    setIsDecrypted(false);
+  }, [text, shuffleText]);
+
+  const triggerDecrypt = useCallback(() => {
+    if (sequential) {
+      orderRef.current = computeOrder(text.length);
+      pointerRef.current = 0;
+      setRevealedIndices(new Set());
+    } else {
+      setRevealedIndices(new Set());
+    }
+    setDirection('forward');
+    setIsAnimating(true);
+  }, [sequential, computeOrder, text.length]);
+
+  const triggerReverse = useCallback(() => {
+    if (sequential) {
+      orderRef.current = computeOrder(text.length).slice().reverse();
+      pointerRef.current = 0;
+      setRevealedIndices(fillAllIndices());
+      setDisplayText(shuffleText(text, fillAllIndices()));
+    } else {
+      setRevealedIndices(fillAllIndices());
+      setDisplayText(shuffleText(text, fillAllIndices()));
+    }
+    setDirection('reverse');
+    setIsAnimating(true);
+  }, [sequential, computeOrder, fillAllIndices, shuffleText, text]);
+
+  useEffect(() => {
+    if (!isAnimating) return;
+    let currentIteration = 0;
+
+    const getNextIndex = revealedSet => {
+      const textLength = text.length;
+      switch (revealDirection) {
+        case 'start': return revealedSet.size;
+        case 'end': return textLength - 1 - revealedSet.size;
+        case 'center': {
+          const middle = Math.floor(textLength / 2);
+          const offset = Math.floor(revealedSet.size / 2);
+          const nextIndex = revealedSet.size % 2 === 0 ? middle + offset : middle - offset - 1;
+          if (nextIndex >= 0 && nextIndex < textLength && !revealedSet.has(nextIndex)) return nextIndex;
+          for (let i = 0; i < textLength; i++) if (!revealedSet.has(i)) return i;
+          return 0;
+        }
+        default: return revealedSet.size;
+      }
+    };
+
+    intervalRef.current = setInterval(() => {
+      setRevealedIndices(prevRevealed => {
+        if (sequential) {
+          if (direction === 'forward') {
+            if (prevRevealed.size < text.length) {
+              const nextIndex = getNextIndex(prevRevealed);
+              const newRevealed = new Set(prevRevealed);
+              newRevealed.add(nextIndex);
+              setDisplayText(shuffleText(text, newRevealed));
+              return newRevealed;
+            } else {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setIsDecrypted(true);
+              return prevRevealed;
+            }
+          }
+          if (direction === 'reverse') {
+            if (pointerRef.current < orderRef.current.length) {
+              const idxToRemove = orderRef.current[pointerRef.current++];
+              const newRevealed = new Set(prevRevealed);
+              newRevealed.delete(idxToRemove);
+              setDisplayText(shuffleText(text, newRevealed));
+              if (newRevealed.size === 0) {
+                clearInterval(intervalRef.current);
+                setIsAnimating(false);
+                setIsDecrypted(false);
+              }
+              return newRevealed;
+            } else {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setIsDecrypted(false);
+              return prevRevealed;
+            }
+          }
+        } else {
+          if (direction === 'forward') {
+            setDisplayText(shuffleText(text, prevRevealed));
+            currentIteration++;
+            if (currentIteration >= maxIterations) {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setDisplayText(text);
+              setIsDecrypted(true);
+            }
+            return prevRevealed;
+          }
+          if (direction === 'reverse') {
+            let currentSet = prevRevealed;
+            if (currentSet.size === 0) currentSet = fillAllIndices();
+            const removeCount = Math.max(1, Math.ceil(text.length / Math.max(1, maxIterations)));
+            const nextSet = removeRandomIndices(currentSet, removeCount);
+            setDisplayText(shuffleText(text, nextSet));
+            currentIteration++;
+            if (nextSet.size === 0 || currentIteration >= maxIterations) {
+              clearInterval(intervalRef.current);
+              setIsAnimating(false);
+              setIsDecrypted(false);
+              setDisplayText(shuffleText(text, new Set()));
+              return new Set();
+            }
+            return nextSet;
+          }
+        }
+        return prevRevealed;
+      });
+    }, speed);
+    return () => clearInterval(intervalRef.current);
+  }, [isAnimating, text, speed, maxIterations, sequential, revealDirection, shuffleText, direction, fillAllIndices, removeRandomIndices]);
+
+  const handleClick = () => {
+    if (animateOn !== 'click') return;
+    if (clickMode === 'once') {
+      if (isDecrypted) return;
+      setDirection('forward');
+      triggerDecrypt();
+    }
+    if (clickMode === 'toggle') {
+      if (isDecrypted) triggerReverse();
+      else {
+        setDirection('forward');
+        triggerDecrypt();
+      }
+    }
+  };
+
+  const triggerHoverDecrypt = useCallback(() => {
+    if (isAnimating) return;
+    setRevealedIndices(new Set());
+    setIsDecrypted(false);
+    setDisplayText(text);
+    setDirection('forward');
+    setIsAnimating(true);
+  }, [isAnimating, text]);
+
+  const resetToPlainText = useCallback(() => {
+    clearInterval(intervalRef.current);
+    setIsAnimating(false);
+    setRevealedIndices(new Set());
+    setDisplayText(text);
+    setIsDecrypted(true);
+    setDirection('forward');
+  }, [text]);
+
+  useEffect(() => {
+    if (animateOn !== 'view' && animateOn !== 'inViewHover') return;
+    const observerCallback = entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !hasAnimated) {
+          triggerDecrypt();
+          setHasAnimated(true);
+        }
+      });
+    };
+    const observer = new IntersectionObserver(observerCallback, { threshold: 0.1 });
+    const currentRef = containerRef.current;
+    if (currentRef) observer.observe(currentRef);
+    return () => { if (currentRef) observer.unobserve(currentRef); };
+  }, [animateOn, hasAnimated, triggerDecrypt]);
+
+  useEffect(() => {
+    if (animateOn === 'click') encryptInstantly();
+    else {
+      setDisplayText(text);
+      setIsDecrypted(true);
+    }
+    setRevealedIndices(new Set());
+    setDirection('forward');
+  }, [animateOn, text, encryptInstantly]);
+
+  const animateProps = animateOn === 'hover' || animateOn === 'inViewHover'
+    ? { onMouseEnter: triggerHoverDecrypt, onMouseLeave: resetToPlainText }
+    : animateOn === 'click' ? { onClick: handleClick } : {};
+
+  return (
+    <motion.span className={parentClassName} ref={containerRef} style={{ display: 'inline-block', whiteSpace: 'pre-wrap' }} {...animateProps} {...props}>
+      <span style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>{displayText}</span>
+      <span aria-hidden="true">
+        {displayText.split('').map((char, index) => {
+          const isRevealedOrDone = revealedIndices.has(index) || (!isAnimating && isDecrypted);
+          return (
+            <span key={index} className={isRevealedOrDone ? className : encryptedClassName}>
+              {char}
+            </span>
+          );
+        })}
+      </span>
+    </motion.span>
+  );
+};
+
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -114,12 +525,32 @@ const App = () => {
     { name: 'O Esporte', href: '#esporte' },
     { name: 'Modalidades', href: '#modalidades' },
     { name: 'A Academia', href: '#academia' },
+    { name: 'Diferenciais', href: '#diferenciais' },
     { name: 'Professor', href: '#professor' },
     { name: 'Loja', href: '#loja' },
     { name: 'Horários', href: '#agenda' },
     { name: 'Planos', href: '#planos' },
     { name: 'Contato', href: '#agenda' },
   ];
+
+  const scrollToSection = (e, href) => {
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.replace('#', '');
+      const elem = document.getElementById(targetId);
+      if (elem) {
+        const offset = 80; 
+        const elementPosition = elem.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+      setIsMenuOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 selection:text-white overflow-x-hidden">
@@ -131,6 +562,9 @@ const App = () => {
         .text-stroke-red {
           -webkit-text-stroke: 1px rgba(220, 38, 38, 0.5);
           color: transparent;
+        }
+        html {
+          scroll-behavior: smooth;
         }
         @keyframes vertical-slide {
           0% { transform: translateY(0); opacity: 0; }
@@ -147,26 +581,198 @@ const App = () => {
         .animate-marquee {
           animation: marquee 20s linear infinite;
         }
+
+        /* === REACT BITS: GlitchText === */
+        .glitch-hero {
+          position: relative;
+          display: inline-block;
+          -webkit-text-stroke: 1px rgba(220, 38, 38, 0.5);
+          color: transparent;
+        }
+        .glitch-hero::after,
+        .glitch-hero::before {
+          content: attr(data-text);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: black;
+          -webkit-text-stroke: 1px rgba(220, 38, 38, 0.5);
+          color: transparent;
+          overflow: hidden;
+        }
+        .glitch-hero::after {
+          left: 3px;
+          text-shadow: -3px 0 rgba(220, 38, 38, 0.9);
+          animation: glitch-a var(--ga-dur, 3.5s) infinite linear alternate-reverse;
+        }
+        .glitch-hero::before {
+          left: -3px;
+          text-shadow: 3px 0 rgba(0, 180, 255, 0.35);
+          animation: glitch-b var(--gb-dur, 2.5s) infinite linear alternate-reverse;
+        }
+        @keyframes glitch-a {
+          0%   { clip-path: inset(22% 0 62% 0); }
+          10%  { clip-path: inset(8%  0 78% 0); }
+          20%  { clip-path: inset(45% 0 40% 0); }
+          30%  { clip-path: inset(2%  0 85% 0); }
+          40%  { clip-path: inset(30% 0 55% 0); }
+          50%  { clip-path: inset(60% 0 18% 0); }
+          60%  { clip-path: inset(15% 0 72% 0); }
+          70%  { clip-path: inset(50% 0 35% 0); }
+          80%  { clip-path: inset(5%  0 80% 0); }
+          90%  { clip-path: inset(70% 0 10% 0); }
+          100% { clip-path: inset(35% 0 50% 0); }
+        }
+        @keyframes glitch-b {
+          0%   { clip-path: inset(65% 0 10% 0); }
+          10%  { clip-path: inset(80% 0 5%  0); }
+          20%  { clip-path: inset(40% 0 35% 0); }
+          30%  { clip-path: inset(75% 0 8%  0); }
+          40%  { clip-path: inset(20% 0 60% 0); }
+          50%  { clip-path: inset(55% 0 28% 0); }
+          60%  { clip-path: inset(88% 0 2%  0); }
+          70%  { clip-path: inset(30% 0 50% 0); }
+          80%  { clip-path: inset(62% 0 18% 0); }
+          90%  { clip-path: inset(10% 0 70% 0); }
+          100% { clip-path: inset(48% 0 30% 0); }
+        }
       `}</style>
 
       {/* Navegação */}
-      <nav className={`fixed w-full z-50 transition-all duration-700 ${
-        scrolled ? 'bg-black/90 backdrop-blur-xl border-b border-white/10 py-3' : 'py-6'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <div className="flex flex-col leading-none italic font-black">
-            <span className="text-2xl tracking-tighter">CT SILVA</span>
-            <span className="text-red-600 text-[10px] tracking-[0.4em] -mt-1">BROTHERS</span>
-          </div>
-          <div className="hidden lg:flex items-center space-x-10">
-            {navLinks.map((link) => (
-              <a key={link.name} href={link.href} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">{link.name}</a>
+      <motion.nav
+        className={`fixed w-full z-50 transition-colors duration-700 ${
+          scrolled ? 'bg-black/95 backdrop-blur-xl' : 'bg-transparent'
+        }`}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Linha inferior animada */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-600 to-transparent"
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: scrolled ? 1 : 0, opacity: scrolled ? 1 : 0 }}
+          transition={{ duration: 0.5 }}
+          style={{ width: '100%', transformOrigin: 'center' }}
+        />
+
+        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center py-4">
+          
+          {/* Logo */}
+          <motion.a
+            href="#"
+            className="flex items-center gap-3 group"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="flex flex-col leading-none italic font-black">
+              <span className="text-xl tracking-tighter">CT SILVA</span>
+              <span className="text-red-600 text-[9px] tracking-[0.4em] -mt-0.5">BROTHERS</span>
+            </div>
+          </motion.a>
+
+          {/* Links Desktop */}
+          <div className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link, i) => (
+              <motion.a
+                key={link.name}
+                href={link.href}
+                onClick={(e) => scrollToSection(e, link.href)}
+                className="relative text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors duration-300 py-1 group"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 + i * 0.05 }}
+              >
+                {link.name}
+                {/* Underline animado */}
+                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-red-600 group-hover:w-full transition-all duration-300" />
+              </motion.a>
             ))}
-            <button className="bg-red-600 px-6 py-3 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 hover:bg-white hover:text-black transition-all">AULA GRÁTIS</button>
+
+            {/* Separador */}
+            <div className="h-4 w-[1px] bg-white/10" />
+
+            {/* Botão CTA */}
+            <motion.button
+              className="relative bg-red-600 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden group"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <span className="absolute cursor-pointer inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <span className="relative cursor-pointer z-10 text-white group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2">
+                <Flame size={12} className="skew-x-12" />
+                AULA GRÁTIS
+              </span>
+            </motion.button>
           </div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden text-red-600"><Menu size={24} /></button>
+
+          {/* Botão Mobile */}
+          <motion.button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
+            whileTap={{ scale: 0.9 }}
+          >
+            <motion.span
+              className="w-6 h-[2px] bg-white block"
+              animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
+              transition={{ duration: 0.3 }}
+            />
+            <motion.span
+              className="w-6 h-[2px] bg-red-600 block"
+              animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
+              transition={{ duration: 0.3 }}
+            />
+            <motion.span
+              className="w-6 h-[2px] bg-white block"
+              animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
+              transition={{ duration: 0.3 }}
+            />
+          </motion.button>
         </div>
-      </nav>
+
+        {/* Menu Mobile */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:hidden overflow-hidden bg-black/98 border-t border-white/10"
+            >
+              <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-4">
+                {navLinks.map((link, i) => (
+                  <motion.a
+                    key={link.name}
+                    href={link.href}
+                    onClick={(e) => scrollToSection(e, link.href)}
+                    className="text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-red-600 transition-colors py-2 border-b border-white/5 flex items-center justify-between group"
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    {link.name}
+                    <ChevronRight size={14} className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </motion.a>
+                ))}
+                <motion.button
+                  className="mt-4 bg-red-600 w-full py-4 font-black text-sm uppercase tracking-widest italic -skew-x-6 hover:bg-white hover:text-black transition-all"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  AULA GRÁTIS
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
 
       {/* Hero */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -175,15 +781,44 @@ const App = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-          <FadeIn direction="up">
-            <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4">Campina Grande • PB</span>
-            <h1 className="text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8">
-              FORJANDO <br />
-              <span className="text-stroke-red">CAMPEÕES</span>
-            </h1>
-            <div className="h-1 w-24 bg-red-600 mb-8" />
-            <p className="text-zinc-400 max-w-xl text-lg md:text-xl font-light">Equipe Silva Brothers: Onde a técnica encontra a resiliência. Venha treinar no CT mais autêntico da região.</p>
-          </FadeIn>
+          <motion.span
+            className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Campina Grande • PB
+          </motion.span>
+
+          <h1 className="text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden">
+            <SplitText
+              text="FORJANDO"
+              className="block"
+              baseDelay={0.4}
+              charDelay={0.055}
+            />
+            <SplitText
+              text="CAMPEÕES"
+              className="block text-red-600"
+              baseDelay={0.8}
+              charDelay={0.06}
+            />
+          </h1>
+
+          <motion.div
+            className="h-1 bg-red-600 mb-8"
+            initial={{ width: 0 }}
+            animate={{ width: 96 }}
+            transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          />
+          <motion.p
+            className="text-zinc-400 max-w-xl text-lg md:text-xl font-light"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Equipe Silva Brothers: Onde a técnica encontra a resiliência. Venha treinar no CT mais autêntico da região.
+          </motion.p>
         </div>
 
         {/* Scroll Indicator */}
@@ -195,20 +830,45 @@ const App = () => {
         </div>
       </section>
 
-      {/* Pilares */}
+      {/* Pilares — TiltCard 3D + Magnet icons (React Bits) */}
       <section className="py-20 bg-black">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { t: 'DISCIPLINA', d: 'Foco total no processo.', i: <Target /> },
-            { t: 'RESPEITO', d: 'Base da nossa filosofia.', i: <Shield /> },
-            { t: 'UNIÃO', d: 'Crescemos como família.', i: <Users /> },
-            { t: 'EVOLUÇÃO', d: '1% melhor a cada dia.', i: <Flame /> }
+            { t: 'DISCIPLINA', d: 'Foco total no processo.', i: <Target size={28} />, num: '01' },
+            { t: 'RESPEITO',   d: 'Base da nossa filosofia.', i: <Shield size={28} />, num: '02' },
+            { t: 'UNIÃO',      d: 'Crescemos como família.', i: <Users size={28} />,  num: '03' },
+            { t: 'EVOLUÇÃO',   d: '1% melhor a cada dia.', i: <Flame size={28} />,  num: '04' }
           ].map((p, i) => (
-            <SpotlightCard key={i} className="p-8 border-white/5">
-              <div className="text-red-600 mb-6">{p.i}</div>
-              <h4 className="text-xl font-black italic mb-2 uppercase">{p.t}</h4>
-              <p className="text-zinc-500 text-xs uppercase tracking-widest">{p.d}</p>
-            </SpotlightCard>
+            <FadeIn key={i} delay={i * 0.12} direction="up">
+              <TiltCard className="h-full">
+                <SpotlightCard className="p-8 h-full flex flex-col justify-between border-white/5 group">
+                  {/* Número decorativo */}
+                  <span className="text-[3rem] font-black italic text-white/[0.04] leading-none select-none absolute top-4 right-4">
+                    {p.num}
+                  </span>
+
+                  {/* Ícone com Magnet */}
+                  <div className="mb-8">
+                    <Magnet padding={60} magnetStrength={4}>
+                      <div className="w-14 h-14 border border-red-600/30 bg-red-600/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 transition-all duration-500">
+                        {p.i}
+                      </div>
+                    </Magnet>
+                  </div>
+
+                  <div>
+                    {/* Linha decorativa */}
+                    <div className="h-[2px] w-8 bg-red-600 mb-4 group-hover:w-full transition-all duration-700" />
+                    <h4 className="text-2xl font-black italic uppercase tracking-tighter mb-2 group-hover:text-red-600 transition-colors duration-300">
+                      {p.t}
+                    </h4>
+                    <p className="text-zinc-500 text-xs uppercase tracking-widest leading-relaxed">
+                      {p.d}
+                    </p>
+                  </div>
+                </SpotlightCard>
+              </TiltCard>
+            </FadeIn>
           ))}
         </div>
       </section>
@@ -229,15 +889,24 @@ const App = () => {
               Fale agora com um de nossos instrutores e agende sua visita.
             </p>
           </div>
-          <motion.a 
-            href="#"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl"
-          >
-            <MessageCircle size={24} className="skew-x-12" />
-            <span className="skew-x-12">CHAMAR NO WHATSAPP</span>
-          </motion.a>
+            <Magnet padding={50} magnetStrength={5}>
+              <motion.a
+                href="#"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl shrink-0 group"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  size={20} 
+                  className="w-5 h-5 skew-x-12 group-hover:text-red-600 transition-colors fill-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                <span className="skew-x-12">CHAMAR NO WHATSAPP</span>
+              </motion.a>
+            </Magnet>
         </div>
       </section>
 
@@ -259,10 +928,6 @@ const App = () => {
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-0">
             <div className="lg:col-span-6 lg:pt-20 relative z-20">
               <FadeIn direction="right">
-                <div className="inline-block bg-red-600 text-white px-4 py-1 font-black italic text-[10px] uppercase tracking-[0.3em] mb-8">
-                  Filosofia Silva Brothers
-                </div>
-                
                 <h2 className="text-6xl md:text-[8rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A FORÇA DO <br />
                   <span className="text-red-600">COLETIVO</span>
@@ -299,7 +964,7 @@ const App = () => {
                   <div className="relative overflow-hidden group">
                     <div className="absolute inset-0 bg-red-600/20 group-hover:bg-transparent transition-all duration-700 z-10"></div>
                     <img 
-                      src="https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1400" 
+                      src="/images/forca-coletivo.jpg" 
                       className="w-full grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000 scale-105 group-hover:scale-100"
                       alt="Treino Coletivo"
                     />
@@ -311,6 +976,53 @@ const App = () => {
                         <ArrowRight size={32} />
                       </button>
                     </motion.div>
+                  </div>
+                  <div className="mt-12 grid grid-cols-2 gap-8 border-t border-white/5 pt-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full border border-red-600/30 flex items-center justify-center text-red-600 bg-red-600/5 group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
+                        <Shield size={20} />
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Ambiente</span>
+                        <span className="block text-sm font-bold uppercase italic text-white">Seguro & Profissional</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full border border-red-600/30 flex items-center justify-center text-red-600 bg-red-600/5 group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
+                        <Users size={20} />
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Comunidade</span>
+                        <span className="block text-sm font-bold uppercase italic text-white">União & Respeito</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Citação do Mestre */}
+                  <div className="mt-12 p-8 bg-zinc-900/50 border border-white/5 relative group overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-red-600/20 transition-all duration-700"></div>
+                    <Quote className="text-red-600 mb-4 opacity-50" size={32} />
+                    <p className="text-zinc-400 italic text-lg leading-relaxed mb-6">
+                      "A união da nossa equipe é o que nos torna invencíveis. No tatame, somos um só corpo, uma só mente."
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="h-[1px] w-8 bg-red-600"></div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Linhagem Silva Brothers</span>
+                    </div>
+                  </div>
+
+                  {/* Mini Stats */}
+                  <div className="mt-8 grid grid-cols-3 gap-4">
+                    {[
+                      { label: 'Treinos / Sem', val: '20+' },
+                      { label: 'Alunos Ativos', val: '150+' },
+                      { label: 'Graduados', val: '40+' }
+                    ].map((stat, i) => (
+                      <div key={i} className="text-center p-6 border border-white/5 bg-white/5 group-hover:border-red-600/30 transition-colors">
+                        <span className="block text-2xl font-black italic text-red-600 mb-1">{stat.val}</span>
+                        <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </FadeIn>
@@ -389,11 +1101,16 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row items-end justify-between mb-24 gap-10">
             <FadeIn direction="right">
-              <div className="max-w-2xl">
+              <div className="max-w-4xl">
                 <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Ambiente Old School</span>
-                <h2 className="text-6xl md:text-8xl font-black uppercase italic leading-[0.8] tracking-tighter">
+                <h2 className="text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter">
                   NOSSO <br />
-                  <span className="text-stroke-red">CENTRO DE TREINO</span>
+                  <SplitText
+                    text="CENTRO DE TREINO"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.04}
+                  />
                 </h2>
               </div>
             </FadeIn>
@@ -440,37 +1157,7 @@ const App = () => {
             ))}
           </div>
 
-          {/* Galeria Grid */}
-          <div className="mt-32 grid grid-cols-12 gap-4 h-[600px]">
-            <div className="col-span-12 md:col-span-7 h-full bg-zinc-900 border border-white/5 overflow-hidden group">
-              <div className="w-full h-full relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1590502160462-09971842820b?q=80&w=1600" 
-                  className="w-full h-full object-cover grayscale opacity-40 group-hover:opacity-80 transition-all duration-1000"
-                  alt="Estrutura rústica"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
-                <div className="absolute bottom-8 left-8">
-                  <span className="bg-red-600 px-4 py-1 text-[10px] font-black italic uppercase tracking-widest">O Templo</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-span-12 md:col-span-5 grid grid-rows-2 gap-4">
-              <div className="bg-zinc-900 border border-white/5 overflow-hidden group relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1000" 
-                  className="w-full h-full object-cover grayscale opacity-40 group-hover:opacity-80 transition-all duration-700"
-                  alt="Treino pesado"
-                />
-              </div>
-              <div className="bg-zinc-900 border border-white/5 p-8 flex flex-col justify-center">
-                <span className="text-red-600 font-black italic text-4xl mb-4">RAIZ.</span>
-                <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] leading-loose">
-                  Nascido no tijolo, forjado no suor. Onde a tradição encontra a técnica em Campina Grande.
-                </p>
-              </div>
-            </div>
-          </div>
+
         </div>
       </section>
 
@@ -490,8 +1177,8 @@ const App = () => {
                   <div className="absolute -inset-4 border border-red-600/30 -z-10 translate-x-4 translate-y-4 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
                   <div className="aspect-[3/4] bg-zinc-900 overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 relative">
                     <img 
-                      src="https://images.unsplash.com/photo-1552072047-399363238d71?q=80&w=1000" 
-                      className="w-full h-full object-cover object-top opacity-80"
+                      src="/images/professor-felipe.jpg" 
+                      className="w-full h-full object-cover object-center opacity-90"
                       alt="Professor Felipe Silva"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -507,10 +1194,14 @@ const App = () => {
             {/* Informações do Professor */}
             <div className="lg:col-span-7">
               <FadeIn direction="left">
-                <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Liderança Técnica</span>
                 <h2 className="text-5xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A MENTE POR TRÁS <br />
-                  <span className="text-stroke-red">DO TATAME</span>
+                  <SplitText
+                    text="DO TATAME"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.05}
+                  />
                 </h2>
 
                 <div className="space-y-8">
@@ -590,7 +1281,7 @@ const App = () => {
               </div>
             </FadeIn>
             <FadeIn direction="left">
-               <button className="mt-8 md:mt-0 flex items-center gap-4 bg-white text-black px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-red-600 hover:text-white transition-all">
+               <button disabled className="mt-8 md:mt-0 flex items-center gap-4 bg-white text-black px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 opacity-50 cursor-not-allowed transition-all">
                 <ShoppingBag size={20} />
                 VISITAR E-COMMERCE
               </button>
@@ -620,25 +1311,32 @@ const App = () => {
             ].map((prod, i) => (
               <FadeIn key={i} delay={i * 0.2}>
                 <div className="group relative">
-                  <div className="aspect-[4/5] bg-zinc-900 border border-white/5 overflow-hidden relative">
+                  {/* OVERLAY EM DESENVOLVIMENTO */}
+                  <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+                    <div className="bg-red-600 text-white px-6 py-3 font-black italic uppercase tracking-widest text-sm -skew-x-12 shadow-2xl">
+                      <span className="skew-x-12 block">EM DESENVOLVIMENTO</span>
+                    </div>
+                  </div>
+
+                  <div className="aspect-[4/5] bg-zinc-900 border border-white/5 overflow-hidden relative pointer-events-none">
                     <div className="absolute top-4 left-4 z-20">
-                      <span className="bg-red-600 text-white text-[8px] font-black uppercase px-2 py-1 tracking-widest italic">
+                      <span className="bg-red-600 text-white text-[8px] font-black uppercase px-2 py-1 tracking-widest italic opacity-50">
                         {prod.tag}
                       </span>
                     </div>
                     <img 
                       src={prod.img} 
-                      className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-110 transition-all duration-700"
+                      className="w-full h-full object-cover grayscale brightness-50"
                       alt={prod.name}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
-                    <div className="absolute bottom-6 left-6 right-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                       <button className="w-full bg-white text-black py-4 font-black italic uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                    <div className="absolute bottom-6 left-6 right-6">
+                       <button disabled className="w-full bg-white/10 text-white/50 py-4 font-black italic uppercase text-xs tracking-widest flex items-center justify-center gap-2">
                         <Tag size={14} /> ADICIONAR AO CARRINHO
                       </button>
                     </div>
                   </div>
-                  <div className="mt-6 flex justify-between items-start">
+                  <div className="mt-6 flex justify-between items-start opacity-50 pointer-events-none">
                     <div>
                       <h4 className="text-xl font-black italic uppercase tracking-tighter mb-1">{prod.name}</h4>
                       <p className="text-red-600 font-black italic tracking-widest text-sm">{prod.price}</p>
@@ -650,6 +1348,104 @@ const App = () => {
                 </div>
               </FadeIn>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- SEÇÃO: DIFERENCIAIS --- */}
+      <section id="diferenciais" className="py-40 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+        {/* Background Decorativo */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/5 blur-[120px] -z-10" />
+        <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-red-600/5 blur-[100px] -z-10" />
+
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <FadeIn direction="up">
+            <div className="mb-24">
+              <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Por que treinar conosco?</span>
+              <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+                NOSSOS <br />
+                <SplitText text="DIFERENCIAIS" className="text-red-600" baseDelay={0.3} />
+              </h2>
+              <div className="h-1 w-24 bg-red-600" />
+            </div>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Tecnologia e Acompanhamento */}
+            <FadeIn delay={0.1}>
+              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
+                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+                  <Zap size={28} className="skew-x-12" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Ecosistema Digital</h3>
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-relaxed mb-8">Gestão moderna para sua evolução constante.</p>
+                  <ul className="space-y-5">
+                    {[
+                      "Agendamento de aulas via App",
+                      "App exclusivo do aluno",
+                      "Sistema de acompanhamento técnico",
+                      "Integração entre modalidades"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+                        <CheckCircle2 size={16} className="text-red-600 shrink-0" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </SpotlightCard>
+            </FadeIn>
+
+            {/* Qualidade de Ensino */}
+            <FadeIn delay={0.2}>
+              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
+                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+                  <Award size={28} className="skew-x-12" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Metodologia Silva</h3>
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-relaxed mb-8">Saber ensinar é a nossa maior graduação.</p>
+                  <ul className="space-y-5">
+                    {[
+                      "Aulas 100% estruturadas",
+                      "Didática específica para iniciantes",
+                      "Atenção individual no tatame",
+                      "Linhagem e histórico comprovados"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+                        <CheckCircle2 size={16} className="text-red-600 shrink-0" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </SpotlightCard>
+            </FadeIn>
+
+            {/* Público Alvo */}
+            <FadeIn delay={0.3}>
+              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
+                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+                  <Target size={28} className="skew-x-12" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Para todos os perfis</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { t: "Infantil", e: "👶" },
+                      { t: "Competição", e: "🏆" },
+                      { t: "Defesa Pessoal", e: "🛡️" },
+                      { t: "Hobby / Saúde", e: "🧘" }
+                    ].map((p, i) => (
+                      <div key={i} className="bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-2 hover:bg-red-600/10 hover:border-red-600/50 transition-all cursor-default">
+                        <span className="text-2xl mb-1">{p.e}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-300 text-center">{p.t}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </SpotlightCard>
+            </FadeIn>
+
           </div>
         </div>
       </section>
@@ -714,12 +1510,14 @@ const App = () => {
             {/* Coluna Horários */}
             <FadeIn direction="right">
               <div className="relative">
-                <div className="inline-block bg-red-600 text-white px-4 py-1 font-black italic text-[10px] uppercase tracking-[0.3em] mb-6">
-                  Check the Schedule
-                </div>
                 <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-[0.85] mb-12">
                   TREINOS <br />
-                  <span className="text-stroke-red">DIÁRIOS</span>
+                  <SplitText
+                    text="DIÁRIOS"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.08}
+                  />
                 </h2>
 
                 <div className="border-t-2 border-red-600 pt-8">
@@ -819,10 +1617,14 @@ const App = () => {
           <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
             <FadeIn direction="right">
               <div>
-                <span className="text-red-600 font-black italic tracking-[0.6em] text-xs uppercase block mb-4">Pricing Strategy</span>
                 <h2 className="text-6xl md:text-9xl font-black italic uppercase tracking-tighter leading-[0.8] mb-4">
                   ESCOLHA <br />
-                  <span className="text-stroke-red">SEU PLANO</span>
+                  <SplitText
+                    text="SEU PLANO"
+                    className="block text-red-600"
+                    baseDelay={0.3}
+                    charDelay={0.05}
+                  />
                 </h2>
                 <div className="h-2 w-40 bg-red-600"></div>
               </div>
@@ -927,7 +1729,7 @@ const App = () => {
                     </div>
                     <div className="text-center md:text-left">
                       <h3 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-2">
-                        TESTE SUA <span className="text-stroke-red group-hover:text-white">FORÇA</span>
+                        TESTE SUA <SplitText text="FORÇA" className="text-red-600 group-hover:text-white transition-colors" baseDelay={0.2} />
                       </h3>
                       <p className="text-zinc-500 group-hover:text-black font-black italic uppercase text-xs tracking-[0.3em] transition-colors duration-700">
                         Primeira aula é por nossa conta. Sinta o peso do tatame.
@@ -950,18 +1752,293 @@ const App = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-20 bg-black border-t border-white/10 text-center">
-        <div className="flex flex-col italic font-black mb-8">
-          <span className="text-3xl tracking-tighter">CT SILVA</span>
-          <span className="text-red-600 text-[12px] tracking-[0.4em] -mt-1">BROTHERS</span>
+      {/* --- SEÇÃO: DEPOIMENTOS / PROVA SOCIAL --- */}
+      <section className="py-32 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+        {/* Background decorativo */}
+        <div className="absolute inset-0 pointer-events-none select-none opacity-[0.025]">
+          <div className="flex items-center h-full">
+            <span className="text-[20rem] font-black italic uppercase whitespace-nowrap">
+              OSS • OSS • OSS •
+            </span>
+          </div>
         </div>
-        <div className="flex justify-center gap-6 mb-12">
-          <Instagram className="text-zinc-600 hover:text-white cursor-pointer" />
-          <Youtube className="text-zinc-600 hover:text-white cursor-pointer" />
-          <Facebook className="text-zinc-600 hover:text-white cursor-pointer" />
+
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <FadeIn direction="up">
+            <div className="text-center mb-20">
+              <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">
+                Prova Social
+              </span>
+              <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+                O QUE DIZEM OS <span className="text-red-600">ALUNOS</span>
+              </h2>
+              <div className="flex items-center justify-center gap-4">
+                <div className="h-[1px] w-16 bg-red-600/50" />
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={16} className="text-red-600 fill-red-600" />
+                  ))}
+                </div>
+                <div className="h-[1px] w-16 bg-red-600/50" />
+              </div>
+            </div>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                nome: "Misael Almeida",
+                texto: "O melhor CT que já treinei, mestre Felipe além de saber muito, sabe passar perfeitamente o conteúdo aos alunos. Se vc quer aprender jiu-jitsu o lugar é esse.",
+                inicial: "M"
+              },
+              {
+                nome: "Telmo Petrucci",
+                texto: "CT de altíssima qualidade, ensinando o Jiu-Jitsu raiz!!!",
+                inicial: "T"
+              },
+              {
+                nome: "José Antoniel",
+                texto: "Melhor academia de jiu-jitsu de CG.",
+                inicial: "J"
+              },
+              {
+                nome: "Dayvison Alexandre",
+                texto: "Centro de treinamento melhor da cidade. Oss!",
+                inicial: "D"
+              },
+              {
+                nome: "Davi Simoes",
+                texto: "Excelente academia de artes marciais.",
+                inicial: "D"
+              }
+            ].map((dep, i) => (
+              <FadeIn key={i} delay={i * 0.1} direction="up">
+                <SpotlightCard className="p-8 flex flex-col h-full group hover:bg-zinc-900 transition-all duration-500">
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-6">
+                    {[...Array(5)].map((_, s) => (
+                      <Star key={s} size={14} className="text-red-600 fill-red-600" />
+                    ))}
+                  </div>
+
+                  {/* Aspas */}
+                  <Quote size={24} className="text-red-600/30 mb-4 group-hover:text-red-600/60 transition-colors" />
+
+                  {/* Texto */}
+                  <p className="text-zinc-400 text-sm leading-relaxed italic flex-1 group-hover:text-zinc-300 transition-colors">
+                    "{dep.texto}"
+                  </p>
+
+                  {/* Divisor */}
+                  <div className="h-[1px] bg-white/5 my-6 group-hover:bg-red-600/30 transition-colors" />
+
+                  {/* Autor */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-600 font-black italic text-sm group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
+                      {dep.inicial}
+                    </div>
+                    <div>
+                      <span className="block text-white font-black italic uppercase tracking-tighter text-sm">{dep.nome}</span>
+                      <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Aluno CT Silva Brothers</span>
+                    </div>
+                  </div>
+                </SpotlightCard>
+              </FadeIn>
+            ))}
+
+            {/* Card de CTA */}
+            <FadeIn delay={0.5} direction="up">
+              <div className="relative h-full overflow-hidden group border border-red-600/20 bg-red-600/5 hover:bg-red-600 transition-all duration-700 cursor-pointer p-8 flex flex-col justify-between">
+                <div className="absolute -bottom-8 -right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Shield size={160} />
+                </div>
+                <div>
+                  <span className="text-red-600 group-hover:text-white font-black italic uppercase tracking-[0.3em] text-[10px] block mb-4 transition-colors">Sua história começa aqui</span>
+                  <h4 className="text-3xl font-black italic uppercase leading-tight tracking-tighter group-hover:text-white transition-colors">
+                    SEJA O PRÓXIMO <span className="text-red-600 group-hover:text-white">CASE</span> DE SUCESSO
+                  </h4>
+                </div>
+                <div className="mt-8 flex items-center gap-3 text-zinc-500 group-hover:text-white transition-colors font-black italic uppercase text-[10px] tracking-widest">
+                  <MessageCircle size={16} />
+                  AGENDAR AULA GRÁTIS
+                  <ArrowRight size={16} />
+                </div>
+              </div>
+            </FadeIn>
+          </div>
         </div>
-        <p className="text-[10px] font-bold text-zinc-800 uppercase tracking-[0.5em]">Campina Grande - Paraíba - Brasil</p>
+      </section>
+
+
+      <footer className="bg-black border-t border-white/10 relative overflow-hidden">
+        {/* Faixa superior vermelha com CTA */}
+        <div className="bg-red-600 py-12 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 flex items-center pointer-events-none select-none">
+            <span className="text-8xl font-black italic uppercase whitespace-nowrap -ml-10">
+              OSS • SILVA BROTHERS • OSS • SILVA BROTHERS •
+            </span>
+          </div>
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div className="max-w-xl">
+              <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none mb-2">
+                <DecryptedText 
+                  text="PRONTO PARA O PRÓXIMO NÍVEL?" 
+                  animateOn="view"
+                  revealDirection="start"
+                  speed={40}
+                />
+              </h3>
+              <p className="text-black font-bold uppercase tracking-[0.2em] text-[10px] opacity-80">
+                Fale agora com um de nossos instrutores e agende sua visita.
+              </p>
+            </div>
+            
+            <Magnet padding={50} magnetStrength={5}>
+              <motion.a
+                href="#"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-black text-white px-10 py-5 flex items-center gap-4 font-black italic uppercase tracking-widest -skew-x-12 hover:bg-zinc-900 transition-all shadow-2xl shrink-0 group"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  size={20} 
+                  className="w-5 h-5 skew-x-12 group-hover:text-red-600 transition-colors fill-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                <span className="skew-x-12">CHAMAR NO WHATSAPP</span>
+              </motion.a>
+            </Magnet>
+          </div>
+        </div>
+
+        {/* Corpo principal do footer */}
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+
+            {/* Coluna 1: Logo e Descrição */}
+            <div className="lg:col-span-1">
+              <div className="flex flex-col leading-none italic font-black mb-6">
+                <span className="text-3xl tracking-tighter">CT SILVA</span>
+                <span className="text-red-600 text-[10px] tracking-[0.4em] -mt-1">BROTHERS</span>
+              </div>
+              <p className="text-zinc-500 text-xs leading-relaxed uppercase tracking-widest mb-8">
+                Forjando campeões em Campina Grande — PB. Jiu-Jitsu, Submission e Wrestling de elite.
+              </p>
+              <div className="flex gap-3">
+                {[
+                  { icon: <Instagram size={18} />, label: "Instagram" },
+                  { icon: <Youtube size={18} />, label: "YouTube" },
+                  { icon: <Facebook size={18} />, label: "Facebook" },
+                ].map((s, i) => (
+                  <motion.a
+                    key={i}
+                    href="#"
+                    aria-label={s.label}
+                    whileHover={{ scale: 1.1, y: -3 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-10 h-10 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white hover:border-red-600 hover:bg-red-600/10 transition-all duration-300"
+                  >
+                    {s.icon}
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+
+            {/* Coluna 2: Navegação */}
+            <div>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+                <div className="h-[2px] w-4 bg-red-600" />
+                Navegação
+              </h5>
+              <ul className="space-y-3">
+                {[
+                  { label: 'O Esporte', href: '#esporte' },
+                  { label: 'Modalidades', href: '#modalidades' },
+                  { label: 'A Academia', href: '#academia' },
+                  { label: 'Professor', href: '#professor' },
+                  { label: 'Loja', href: '#loja' },
+                  { label: 'Horários', href: '#agenda' },
+                  { label: 'Planos', href: '#planos' },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <a
+                      href={link.href}
+                      className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest hover:text-red-600 hover:pl-2 transition-all duration-300 flex items-center gap-2 group"
+                    >
+                      <ChevronRight size={10} className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Coluna 3: Modalidades */}
+            <div>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+                <div className="h-[2px] w-4 bg-red-600" />
+                Modalidades
+              </h5>
+              <ul className="space-y-3">
+                {['Jiu-Jitsu Kimono', 'No-Gi Grappling', 'Submission', 'Wrestling', 'Defesa Pessoal', 'Jiu-Jitsu Kids'].map((m) => (
+                  <li key={m}>
+                    <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1 h-1 bg-red-600 rounded-full" />
+                      {m}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Coluna 4: Contato */}
+            <div>
+              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+                <div className="h-[2px] w-4 bg-red-600" />
+                Contato
+              </h5>
+              <ul className="space-y-5">
+                <li className="flex items-start gap-4">
+                  <MapPin size={16} className="text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="block text-white text-xs font-bold uppercase tracking-widest">Campina Grande, PB</span>
+                    <span className="text-zinc-600 text-[11px] font-normal">Rua do Treino, 123 — Centro</span>
+                  </div>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Phone size={16} className="text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="block text-white text-xs font-bold uppercase tracking-widest">(83) 98888-8888</span>
+                    <span className="text-zinc-600 text-[11px]">WhatsApp disponível</span>
+                  </div>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Clock size={16} className="text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="block text-white text-xs font-bold uppercase tracking-widest">Seg — Sex</span>
+                    <span className="text-zinc-600 text-[11px]">12h às 21h</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Barra de copyright */}
+        <div className="border-t border-white/5 py-6">
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">
+              © {new Date().getFullYear()} CT Silva Brothers. Todos os direitos reservados.
+            </p>
+            <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">
+              Campina Grande • Paraíba • Brasil
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
