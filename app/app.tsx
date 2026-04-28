@@ -42,7 +42,9 @@ import {
   Send,
   Sparkles,
   TrendingUp,
-  Crown
+  Crown,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence, useInView, useMotionValue, useTransform } from 'framer-motion';
 
@@ -514,6 +516,7 @@ const DecryptedText = ({
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -553,7 +556,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 selection:text-white overflow-x-hidden">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} font-sans selection:bg-red-600 selection:text-white overflow-x-hidden transition-colors duration-500`}>
       <style>{`
         .text-stroke {
           -webkit-text-stroke: 1px rgba(255, 255, 255, 0.15);
@@ -643,7 +646,9 @@ const App = () => {
       {/* Navegação */}
       <motion.nav
         className={`fixed w-full z-50 transition-colors duration-700 ${
-          scrolled ? 'bg-black/95 backdrop-blur-xl' : 'bg-transparent'
+          scrolled 
+            ? isDarkMode ? 'bg-black/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-xl shadow-sm'
+            : 'bg-transparent'
         }`}
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -668,7 +673,7 @@ const App = () => {
             whileTap={{ scale: 0.98 }}
           >
             <div className="flex flex-col leading-none italic font-black">
-              <span className="text-xl tracking-tighter">CT SILVA</span>
+              <span className={`text-xl tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>CT SILVA</span>
               <span className="text-red-600 text-[9px] tracking-[0.4em] -mt-0.5">BROTHERS</span>
             </div>
           </motion.a>
@@ -680,7 +685,9 @@ const App = () => {
                 key={link.name}
                 href={link.href}
                 onClick={(e) => scrollToSection(e, link.href)}
-                className="relative text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors duration-300 py-1 group"
+                className={`relative text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 py-1 group ${
+                  isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-black'
+                }`}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 + i * 0.05 }}
@@ -692,7 +699,17 @@ const App = () => {
             ))}
 
             {/* Separador */}
-            <div className="h-4 w-[1px] bg-white/10" />
+            <div className={`h-4 w-[1px] ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
+
+            {/* Botão Tema */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-black hover:bg-black/10'
+              }`}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
             {/* Botão CTA */}
             <motion.button
@@ -704,35 +721,47 @@ const App = () => {
               transition={{ duration: 0.6, delay: 0.6 }}
             >
               <span className="absolute cursor-pointer inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              <span className="relative cursor-pointer z-10 text-white group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2">
+              <span className={`relative cursor-pointer z-10 ${isDarkMode ? 'text-white' : 'text-white'} group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2`}>
                 <Flame size={12} className="skew-x-12" />
                 AULA GRÁTIS
               </span>
             </motion.button>
           </div>
 
-          {/* Botão Mobile */}
-          <motion.button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
-            whileTap={{ scale: 0.9 }}
-          >
-            <motion.span
-              className="w-6 h-[2px] bg-white block"
-              animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
-              transition={{ duration: 0.3 }}
-            />
-            <motion.span
-              className="w-6 h-[2px] bg-red-600 block"
-              animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
-              transition={{ duration: 0.3 }}
-            />
-            <motion.span
-              className="w-6 h-[2px] bg-white block"
-              animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
-              transition={{ duration: 0.3 }}
-            />
-          </motion.button>
+          <div className="flex items-center gap-4 lg:hidden">
+            {/* Theme Toggle Mobile */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}
+            >
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
+            {/* Menu Toggle Mobile */}
+            <motion.button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
+              whileTap={{ scale: 0.9 }}
+            >
+              <motion.span
+                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
+                animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+              <motion.span
+                className="w-6 h-[2px] bg-red-600 block"
+                animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
+              />
+              <motion.span
+                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
+                animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.button>
+          </div>
         </div>
 
         {/* Menu Mobile */}
@@ -745,13 +774,17 @@ const App = () => {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="lg:hidden overflow-hidden bg-black/98 border-t border-white/10"
             >
-              <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-4">
+              <div className={`max-w-7xl mx-auto px-6 py-8 flex flex-col gap-4 ${isDarkMode ? 'bg-black/98 border-white/10' : 'bg-white/98 border-black/10'}`}>
                 {navLinks.map((link, i) => (
                   <motion.a
                     key={link.name}
                     href={link.href}
                     onClick={(e) => scrollToSection(e, link.href)}
-                    className="text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-red-600 transition-colors py-2 border-b border-white/5 flex items-center justify-between group"
+                    className={`text-sm font-black uppercase tracking-widest transition-colors py-2 border-b flex items-center justify-between group ${
+                      isDarkMode 
+                        ? 'text-zinc-400 hover:text-red-600 border-white/5' 
+                        : 'text-zinc-600 hover:text-red-600 border-black/5'
+                    }`}
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: i * 0.05 }}
@@ -776,9 +809,13 @@ const App = () => {
 
       {/* Hero */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0 bg-black">
-          <img src="https://wallpapers.com/images/hd/jiu-jitsu-1920-x-1080-5apb8ujim4llp13f.jpg" className="w-full h-full object-cover opacity-30 grayscale" alt="Fundo Hero" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
+        <div className={`absolute inset-0 z-0 transition-colors duration-1000 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+          <img 
+            src="https://wallpapers.com/images/hd/jiu-jitsu-1920-x-1080-5apb8ujim4llp13f.jpg" 
+            className={`w-full h-full object-cover transition-opacity duration-1000 ${isDarkMode ? 'opacity-30 grayscale' : 'opacity-0'}`} 
+            alt="Fundo Hero" 
+          />
+          <div className={`absolute inset-0 transition-opacity duration-1000 ${isDarkMode ? 'opacity-100 bg-gradient-to-t from-black via-transparent to-black/80' : 'opacity-0'}`} />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <motion.span
@@ -812,7 +849,7 @@ const App = () => {
             transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
           />
           <motion.p
-            className="text-zinc-400 max-w-xl text-lg md:text-xl font-light"
+            className={`${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'} max-w-xl text-lg md:text-xl font-light`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
@@ -823,10 +860,10 @@ const App = () => {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
-          <div className="w-6 h-10 rounded-full border border-white/20 flex justify-center p-1 bg-white/5">
+          <div className={`w-6 h-10 rounded-full border flex justify-center p-1 ${isDarkMode ? 'border-white/20 bg-white/5' : 'border-black/20 bg-black/5'}`}>
             <div className="w-1 h-2 bg-red-600 rounded-full animate-scroll-dot" />
           </div>
-          <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-zinc-500">Scroll</span>
+          <span className={`text-[8px] font-bold uppercase tracking-[0.4em] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Scroll</span>
         </div>
       </section>
 
