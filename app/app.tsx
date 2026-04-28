@@ -50,7 +50,7 @@ import { motion, AnimatePresence, useInView, useMotionValue, useTransform } from
 
 // --- COMPONENTES AUXILIARES ---
 
-const SpotlightCard = ({ children, className = "" }) => {
+const SpotlightCard = ({ children, className = "", isDarkMode = true }) => {
   const divRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [opacity, setOpacity] = useState(0);
@@ -68,7 +68,7 @@ const SpotlightCard = ({ children, className = "" }) => {
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setOpacity(1)}
       onMouseLeave={() => setOpacity(0)}
-      className={`relative overflow-hidden border border-white/5 bg-zinc-900 ${className}`}
+      className={`relative overflow-hidden border ${isDarkMode ? 'border-white/5 bg-zinc-900' : 'border-black/5 bg-white shadow-xl'} ${className}`}
     >
       <div
         className="pointer-events-none absolute -inset-px transition duration-300"
@@ -868,7 +868,7 @@ const App = () => {
       </section>
 
       {/* Pilares — TiltCard 3D + Magnet icons (React Bits) */}
-      <section className="py-20 bg-black">
+      <section className={`py-20 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-zinc-50'}`}>
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
             { t: 'DISCIPLINA', d: 'Foco total no processo.', i: <Target size={28} />, num: '01' },
@@ -878,9 +878,9 @@ const App = () => {
           ].map((p, i) => (
             <FadeIn key={i} delay={i * 0.12} direction="up">
               <TiltCard className="h-full">
-                <SpotlightCard className="p-8 h-full flex flex-col justify-between border-white/5 group">
+                <SpotlightCard isDarkMode={isDarkMode} className="p-8 h-full flex flex-col justify-between group">
                   {/* Número decorativo */}
-                  <span className="text-[3rem] font-black italic text-white/[0.04] leading-none select-none absolute top-4 right-4">
+                  <span className={`text-[3rem] font-black italic leading-none select-none absolute top-4 right-4 transition-colors duration-500 ${isDarkMode ? 'text-white/[0.04]' : 'text-black/[0.04]'}`}>
                     {p.num}
                   </span>
 
@@ -948,15 +948,18 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: A FORÇA DO COLETIVO --- */}
-      <section id="esporte" className="relative py-40 bg-zinc-950 overflow-hidden">
+      <section id="esporte" className={`relative py-40 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`}>
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-          <div className="max-w-7xl mx-auto h-full grid grid-cols-12 gap-0 border-x border-white">
-            {[...Array(11)].map((_, i) => <div key={i} className="border-r border-white h-full" />)}
+          <div className={`max-w-7xl mx-auto h-full grid grid-cols-12 gap-0 border-x ${isDarkMode ? 'border-white' : 'border-black'}`}>
+            {[...Array(11)].map((_, i) => <div key={i} className={`border-r h-full ${isDarkMode ? 'border-white' : 'border-black'}`} />)}
           </div>
         </div>
 
         <div className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 select-none pointer-events-none">
-          <span className="text-[30rem] font-black italic uppercase text-stroke opacity-10 leading-none">
+          <span 
+            className="text-[30rem] font-black italic uppercase opacity-10 leading-none text-transparent"
+            style={{ WebkitTextStroke: isDarkMode ? '1px rgba(255, 255, 255, 0.15)' : '1px rgba(0, 0, 0, 0.15)' }}
+          >
             TEAM
           </span>
         </div>
@@ -971,23 +974,23 @@ const App = () => {
                 </h2>
 
                 <div className="max-w-md">
-                  <p className="text-xl md:text-2xl font-light text-zinc-300 leading-tight mb-8">
-                    Não é sobre quem finaliza mais rápido, é sobre <span className="text-white font-bold italic">não deixar ninguém para trás</span>.
+                  <p className={`text-xl md:text-2xl font-light leading-tight mb-8 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                    Não é sobre quem finaliza mais rápido, é sobre <span className={`font-bold italic ${isDarkMode ? 'text-white' : 'text-black'}`}>não deixar ninguém para trás</span>.
                   </p>
                   
-                  <div className="space-y-6 text-zinc-500 text-sm leading-relaxed mb-12">
+                  <div className={`space-y-6 text-sm leading-relaxed mb-12 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>
                     <p>No CT Silva Brothers, acreditamos que o ambiente molda o lutador. Nosso tatame é um ecossistema de evolução mútua onde a graduação traz a responsabilidade de ensinar.</p>
                     <p>Aqui, o iniciante é acolhido e o veterano é desafiado. Essa troca constante cria uma base técnica inigualável e laços que transcendem o esporte.</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-8 border-t border-white/10 pt-10">
+                  <div className={`grid grid-cols-2 gap-8 border-t pt-10 ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}>
                     <div>
-                      <span className="block text-4xl font-black italic text-white mb-1">01.</span>
-                      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Respeito à Hierarquia</span>
+                      <span className={`block text-4xl font-black italic mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>01.</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Respeito à Hierarquia</span>
                     </div>
                     <div>
-                      <span className="block text-4xl font-black italic text-white mb-1">02.</span>
-                      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Suporte Mútuo</span>
+                      <span className={`block text-4xl font-black italic mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>02.</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Suporte Mútuo</span>
                     </div>
                   </div>
                 </div>
@@ -1014,14 +1017,14 @@ const App = () => {
                       </button>
                     </motion.div>
                   </div>
-                  <div className="mt-12 grid grid-cols-2 gap-8 border-t border-white/5 pt-8">
+                  <div className={`mt-12 grid grid-cols-2 gap-8 border-t pt-8 ${isDarkMode ? 'border-white/5' : 'border-black/5'}`}>
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full border border-red-600/30 flex items-center justify-center text-red-600 bg-red-600/5 group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
                         <Shield size={20} />
                       </div>
                       <div>
-                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Ambiente</span>
-                        <span className="block text-sm font-bold uppercase italic text-white">Seguro & Profissional</span>
+                        <span className={`block text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Ambiente</span>
+                        <span className={`block text-sm font-bold uppercase italic ${isDarkMode ? 'text-white' : 'text-black'}`}>Seguro & Profissional</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -1029,22 +1032,22 @@ const App = () => {
                         <Users size={20} />
                       </div>
                       <div>
-                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Comunidade</span>
-                        <span className="block text-sm font-bold uppercase italic text-white">União & Respeito</span>
+                        <span className={`block text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Comunidade</span>
+                        <span className={`block text-sm font-bold uppercase italic ${isDarkMode ? 'text-white' : 'text-black'}`}>União & Respeito</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Citação do Mestre */}
-                  <div className="mt-12 p-8 bg-zinc-900/50 border border-white/5 relative group overflow-hidden">
+                  <div className={`mt-12 p-8 relative group overflow-hidden border transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-zinc-50 border-black/5 shadow-sm'}`}>
                     <div className="absolute top-0 right-0 w-24 h-24 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-red-600/20 transition-all duration-700"></div>
-                    <Quote className="text-red-600 mb-4 opacity-50" size={32} />
-                    <p className="text-zinc-400 italic text-lg leading-relaxed mb-6">
+                    <Quote className={`text-red-600 mb-4 ${isDarkMode ? 'opacity-50' : 'opacity-80'}`} size={32} />
+                    <p className={`italic text-lg leading-relaxed mb-6 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
                       "A união da nossa equipe é o que nos torna invencíveis. No tatame, somos um só corpo, uma só mente."
                     </p>
                     <div className="flex items-center gap-4">
                       <div className="h-[1px] w-8 bg-red-600"></div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Linhagem Silva Brothers</span>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDarkMode ? 'text-white' : 'text-black'}`}>Linhagem Silva Brothers</span>
                     </div>
                   </div>
 
@@ -1055,7 +1058,7 @@ const App = () => {
                       { label: 'Alunos Ativos', val: '150+' },
                       { label: 'Graduados', val: '40+' }
                     ].map((stat, i) => (
-                      <div key={i} className="text-center p-6 border border-white/5 bg-white/5 group-hover:border-red-600/30 transition-colors">
+                      <div key={i} className={`text-center p-6 border group-hover:border-red-600/30 transition-colors ${isDarkMode ? 'border-white/5 bg-white/5' : 'border-black/5 bg-black/5'}`}>
                         <span className="block text-2xl font-black italic text-red-600 mb-1">{stat.val}</span>
                         <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
                       </div>
