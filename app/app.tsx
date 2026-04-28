@@ -42,13 +42,15 @@ import {
   Send,
   Sparkles,
   TrendingUp,
-  Crown
+  Crown,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence, useInView, useMotionValue, useTransform } from 'framer-motion';
 
 // --- COMPONENTES AUXILIARES ---
 
-const SpotlightCard = ({ children, className = "" }) => {
+const SpotlightCard = ({ children, className = "", isDarkMode = true }) => {
   const divRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [opacity, setOpacity] = useState(0);
@@ -66,7 +68,7 @@ const SpotlightCard = ({ children, className = "" }) => {
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setOpacity(1)}
       onMouseLeave={() => setOpacity(0)}
-      className={`relative overflow-hidden border border-white/5 bg-zinc-900 ${className}`}
+      className={`relative overflow-hidden border ${isDarkMode ? 'border-white/5 bg-zinc-900' : 'border-black/5 bg-white shadow-xl'} ${className}`}
     >
       <div
         className="pointer-events-none absolute -inset-px transition duration-300"
@@ -514,6 +516,19 @@ const DecryptedText = ({
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  useEffect(() => {
+    // 1. Detecta a preferência do sistema operacional assim que a página carrega
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    setIsDarkMode(mediaQuery.matches);
+
+    // 2. Adiciona um ouvinte para mudar automaticamente se o usuário alterar o tema do celular/PC com o site aberto
+    const handleChange = (e) => setIsDarkMode(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -553,7 +568,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-red-600 selection:text-white overflow-x-hidden">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} font-sans selection:bg-red-600 selection:text-white overflow-x-hidden transition-colors duration-500`}>
       <style>{`
         .text-stroke {
           -webkit-text-stroke: 1px rgba(255, 255, 255, 0.15);
@@ -643,7 +658,9 @@ const App = () => {
       {/* Navegação */}
       <motion.nav
         className={`fixed w-full z-50 transition-colors duration-700 ${
-          scrolled ? 'bg-black/95 backdrop-blur-xl' : 'bg-transparent'
+          scrolled 
+            ? isDarkMode ? 'bg-black/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-xl shadow-sm'
+            : 'bg-transparent'
         }`}
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -668,19 +685,21 @@ const App = () => {
             whileTap={{ scale: 0.98 }}
           >
             <div className="flex flex-col leading-none italic font-black">
-              <span className="text-xl tracking-tighter">CT SILVA</span>
+              <span className={`text-xl tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>CT SILVA</span>
               <span className="text-red-600 text-[9px] tracking-[0.4em] -mt-0.5">BROTHERS</span>
             </div>
           </motion.a>
 
           {/* Links Desktop */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden xl:flex items-center gap-4 2xl:gap-8">
             {navLinks.map((link, i) => (
               <motion.a
                 key={link.name}
                 href={link.href}
                 onClick={(e) => scrollToSection(e, link.href)}
-                className="relative text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors duration-300 py-1 group"
+                className={`relative text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 py-1 whitespace-nowrap group ${
+                  isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-black'
+                }`}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 + i * 0.05 }}
@@ -692,11 +711,21 @@ const App = () => {
             ))}
 
             {/* Separador */}
-            <div className="h-4 w-[1px] bg-white/10" />
+            <div className={`h-4 w-[1px] ml-2 mr-2 ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
+
+            {/* Botão Tema */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${
+                isDarkMode ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-black hover:bg-black/10'
+              }`}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
             {/* Botão CTA */}
             <motion.button
-              className="relative bg-red-600 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden group"
+              className="relative bg-red-600 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden shrink-0 group ml-2"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, x: 20 }}
@@ -704,35 +733,47 @@ const App = () => {
               transition={{ duration: 0.6, delay: 0.6 }}
             >
               <span className="absolute cursor-pointer inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              <span className="relative cursor-pointer z-10 text-white group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2">
+              <span className={`relative cursor-pointer z-10 ${isDarkMode ? 'text-white' : 'text-white'} group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2`}>
                 <Flame size={12} className="skew-x-12" />
                 AULA GRÁTIS
               </span>
             </motion.button>
           </div>
 
-          {/* Botão Mobile */}
-          <motion.button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
-            whileTap={{ scale: 0.9 }}
-          >
-            <motion.span
-              className="w-6 h-[2px] bg-white block"
-              animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
-              transition={{ duration: 0.3 }}
-            />
-            <motion.span
-              className="w-6 h-[2px] bg-red-600 block"
-              animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
-              transition={{ duration: 0.3 }}
-            />
-            <motion.span
-              className="w-6 h-[2px] bg-white block"
-              animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
-              transition={{ duration: 0.3 }}
-            />
-          </motion.button>
+          <div className="flex items-center gap-4 xl:hidden">
+            {/* Theme Toggle Mobile */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}
+            >
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
+            {/* Menu Toggle Mobile */}
+            <motion.button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
+              whileTap={{ scale: 0.9 }}
+            >
+              <motion.span
+                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
+                animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+              <motion.span
+                className="w-6 h-[2px] bg-red-600 block"
+                animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
+              />
+              <motion.span
+                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
+                animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.button>
+          </div>
         </div>
 
         {/* Menu Mobile */}
@@ -745,13 +786,17 @@ const App = () => {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="lg:hidden overflow-hidden bg-black/98 border-t border-white/10"
             >
-              <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-4">
+              <div className={`max-w-7xl mx-auto px-6 py-8 flex flex-col gap-4 ${isDarkMode ? 'bg-black/98 border-white/10' : 'bg-white/98 border-black/10'}`}>
                 {navLinks.map((link, i) => (
                   <motion.a
                     key={link.name}
                     href={link.href}
                     onClick={(e) => scrollToSection(e, link.href)}
-                    className="text-sm font-black uppercase tracking-widest text-zinc-400 hover:text-red-600 transition-colors py-2 border-b border-white/5 flex items-center justify-between group"
+                    className={`text-sm font-black uppercase tracking-widest transition-colors py-2 border-b flex items-center justify-between group ${
+                      isDarkMode 
+                        ? 'text-zinc-400 hover:text-red-600 border-white/5' 
+                        : 'text-zinc-600 hover:text-red-600 border-black/5'
+                    }`}
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: i * 0.05 }}
@@ -776,9 +821,13 @@ const App = () => {
 
       {/* Hero */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0 bg-black">
-          <img src="https://wallpapers.com/images/hd/jiu-jitsu-1920-x-1080-5apb8ujim4llp13f.jpg" className="w-full h-full object-cover opacity-30 grayscale" alt="Fundo Hero" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
+        <div className={`absolute inset-0 z-0 transition-colors duration-1000 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+          <img 
+            src="https://wallpapers.com/images/hd/jiu-jitsu-1920-x-1080-5apb8ujim4llp13f.jpg" 
+            className={`w-full h-full object-cover transition-opacity duration-1000 ${isDarkMode ? 'opacity-30 grayscale' : 'opacity-0'}`} 
+            alt="Fundo Hero" 
+          />
+          <div className={`absolute inset-0 transition-opacity duration-1000 ${isDarkMode ? 'opacity-100 bg-gradient-to-t from-black via-transparent to-black/80' : 'opacity-0'}`} />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <motion.span
@@ -812,7 +861,7 @@ const App = () => {
             transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
           />
           <motion.p
-            className="text-zinc-400 max-w-xl text-lg md:text-xl font-light"
+            className={`${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'} max-w-xl text-lg md:text-xl font-light`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
@@ -823,15 +872,15 @@ const App = () => {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
-          <div className="w-6 h-10 rounded-full border border-white/20 flex justify-center p-1 bg-white/5">
+          <div className={`w-6 h-10 rounded-full border flex justify-center p-1 ${isDarkMode ? 'border-white/20 bg-white/5' : 'border-black/20 bg-black/5'}`}>
             <div className="w-1 h-2 bg-red-600 rounded-full animate-scroll-dot" />
           </div>
-          <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-zinc-500">Scroll</span>
+          <span className={`text-[8px] font-bold uppercase tracking-[0.4em] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Scroll</span>
         </div>
       </section>
 
       {/* Pilares — TiltCard 3D + Magnet icons (React Bits) */}
-      <section className="py-20 bg-black">
+      <section className={`py-20 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-zinc-50'}`}>
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
             { t: 'DISCIPLINA', d: 'Foco total no processo.', i: <Target size={28} />, num: '01' },
@@ -841,9 +890,9 @@ const App = () => {
           ].map((p, i) => (
             <FadeIn key={i} delay={i * 0.12} direction="up">
               <TiltCard className="h-full">
-                <SpotlightCard className="p-8 h-full flex flex-col justify-between border-white/5 group">
+                <SpotlightCard isDarkMode={isDarkMode} className="p-8 h-full flex flex-col justify-between group">
                   {/* Número decorativo */}
-                  <span className="text-[3rem] font-black italic text-white/[0.04] leading-none select-none absolute top-4 right-4">
+                  <span className={`text-[3rem] font-black italic leading-none select-none absolute top-4 right-4 transition-colors duration-500 ${isDarkMode ? 'text-white/[0.04]' : 'text-black/[0.04]'}`}>
                     {p.num}
                   </span>
 
@@ -911,15 +960,18 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: A FORÇA DO COLETIVO --- */}
-      <section id="esporte" className="relative py-40 bg-zinc-950 overflow-hidden">
+      <section id="esporte" className={`relative py-40 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`}>
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-          <div className="max-w-7xl mx-auto h-full grid grid-cols-12 gap-0 border-x border-white">
-            {[...Array(11)].map((_, i) => <div key={i} className="border-r border-white h-full" />)}
+          <div className={`max-w-7xl mx-auto h-full grid grid-cols-12 gap-0 border-x ${isDarkMode ? 'border-white' : 'border-black'}`}>
+            {[...Array(11)].map((_, i) => <div key={i} className={`border-r h-full ${isDarkMode ? 'border-white' : 'border-black'}`} />)}
           </div>
         </div>
 
         <div className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 select-none pointer-events-none">
-          <span className="text-[30rem] font-black italic uppercase text-stroke opacity-10 leading-none">
+          <span 
+            className="text-[30rem] font-black italic uppercase opacity-10 leading-none text-transparent"
+            style={{ WebkitTextStroke: isDarkMode ? '1px rgba(255, 255, 255, 0.15)' : '1px rgba(0, 0, 0, 0.15)' }}
+          >
             TEAM
           </span>
         </div>
@@ -934,23 +986,23 @@ const App = () => {
                 </h2>
 
                 <div className="max-w-md">
-                  <p className="text-xl md:text-2xl font-light text-zinc-300 leading-tight mb-8">
-                    Não é sobre quem finaliza mais rápido, é sobre <span className="text-white font-bold italic">não deixar ninguém para trás</span>.
+                  <p className={`text-xl md:text-2xl font-light leading-tight mb-8 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                    Não é sobre quem finaliza mais rápido, é sobre <span className={`font-bold italic ${isDarkMode ? 'text-white' : 'text-black'}`}>não deixar ninguém para trás</span>.
                   </p>
                   
-                  <div className="space-y-6 text-zinc-500 text-sm leading-relaxed mb-12">
+                  <div className={`space-y-6 text-sm leading-relaxed mb-12 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>
                     <p>No CT Silva Brothers, acreditamos que o ambiente molda o lutador. Nosso tatame é um ecossistema de evolução mútua onde a graduação traz a responsabilidade de ensinar.</p>
                     <p>Aqui, o iniciante é acolhido e o veterano é desafiado. Essa troca constante cria uma base técnica inigualável e laços que transcendem o esporte.</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-8 border-t border-white/10 pt-10">
+                  <div className={`grid grid-cols-2 gap-8 border-t pt-10 ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}>
                     <div>
-                      <span className="block text-4xl font-black italic text-white mb-1">01.</span>
-                      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Respeito à Hierarquia</span>
+                      <span className={`block text-4xl font-black italic mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>01.</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Respeito à Hierarquia</span>
                     </div>
                     <div>
-                      <span className="block text-4xl font-black italic text-white mb-1">02.</span>
-                      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Suporte Mútuo</span>
+                      <span className={`block text-4xl font-black italic mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>02.</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Suporte Mútuo</span>
                     </div>
                   </div>
                 </div>
@@ -977,14 +1029,14 @@ const App = () => {
                       </button>
                     </motion.div>
                   </div>
-                  <div className="mt-12 grid grid-cols-2 gap-8 border-t border-white/5 pt-8">
+                  <div className={`mt-12 grid grid-cols-2 gap-8 border-t pt-8 ${isDarkMode ? 'border-white/5' : 'border-black/5'}`}>
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full border border-red-600/30 flex items-center justify-center text-red-600 bg-red-600/5 group-hover:bg-red-600 group-hover:text-white transition-all duration-500">
                         <Shield size={20} />
                       </div>
                       <div>
-                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Ambiente</span>
-                        <span className="block text-sm font-bold uppercase italic text-white">Seguro & Profissional</span>
+                        <span className={`block text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Ambiente</span>
+                        <span className={`block text-sm font-bold uppercase italic ${isDarkMode ? 'text-white' : 'text-black'}`}>Seguro & Profissional</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -992,22 +1044,22 @@ const App = () => {
                         <Users size={20} />
                       </div>
                       <div>
-                        <span className="block text-[10px] font-black uppercase tracking-widest text-zinc-500">Comunidade</span>
-                        <span className="block text-sm font-bold uppercase italic text-white">União & Respeito</span>
+                        <span className={`block text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>Comunidade</span>
+                        <span className={`block text-sm font-bold uppercase italic ${isDarkMode ? 'text-white' : 'text-black'}`}>União & Respeito</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Citação do Mestre */}
-                  <div className="mt-12 p-8 bg-zinc-900/50 border border-white/5 relative group overflow-hidden">
+                  <div className={`mt-12 p-8 relative group overflow-hidden border transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-zinc-50 border-black/5 shadow-sm'}`}>
                     <div className="absolute top-0 right-0 w-24 h-24 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-red-600/20 transition-all duration-700"></div>
-                    <Quote className="text-red-600 mb-4 opacity-50" size={32} />
-                    <p className="text-zinc-400 italic text-lg leading-relaxed mb-6">
+                    <Quote className={`text-red-600 mb-4 ${isDarkMode ? 'opacity-50' : 'opacity-80'}`} size={32} />
+                    <p className={`italic text-lg leading-relaxed mb-6 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
                       "A união da nossa equipe é o que nos torna invencíveis. No tatame, somos um só corpo, uma só mente."
                     </p>
                     <div className="flex items-center gap-4">
                       <div className="h-[1px] w-8 bg-red-600"></div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Linhagem Silva Brothers</span>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDarkMode ? 'text-white' : 'text-black'}`}>Linhagem Silva Brothers</span>
                     </div>
                   </div>
 
@@ -1018,7 +1070,7 @@ const App = () => {
                       { label: 'Alunos Ativos', val: '150+' },
                       { label: 'Graduados', val: '40+' }
                     ].map((stat, i) => (
-                      <div key={i} className="text-center p-6 border border-white/5 bg-white/5 group-hover:border-red-600/30 transition-colors">
+                      <div key={i} className={`text-center p-6 border group-hover:border-red-600/30 transition-colors ${isDarkMode ? 'border-white/5 bg-white/5' : 'border-black/5 bg-black/5'}`}>
                         <span className="block text-2xl font-black italic text-red-600 mb-1">{stat.val}</span>
                         <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
                       </div>
@@ -1032,14 +1084,14 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: NOSSAS MODALIDADES --- */}
-      <section id="modalidades" className="py-32 bg-zinc-950 relative overflow-hidden border-y border-white/5">
+      <section id="modalidades" className={`py-32 relative overflow-hidden border-y transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950 border-white/5' : 'bg-white border-black/5'}`}>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <FadeIn direction="up">
             <div className="text-center mb-20">
               <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
                 NOSSAS <span className="text-red-600">MODALIDADES</span>
               </h2>
-              <p className="text-zinc-400 text-lg md:text-xl font-light max-w-2xl mx-auto border-t border-red-600/30 pt-4 uppercase tracking-widest">
+              <p className={`text-lg md:text-xl font-light max-w-2xl mx-auto border-t border-red-600/30 pt-4 uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
                 Treinamento de elite para quem busca a essência da luta
               </p>
             </div>
@@ -1069,8 +1121,8 @@ const App = () => {
               }
             ].map((mod, i) => (
               <FadeIn key={i} delay={i * 0.15}>
-                <SpotlightCard className="p-10 flex flex-col h-full group hover:bg-zinc-900 transition-all duration-500">
-                   <div className="w-16 h-16 bg-black flex items-center justify-center text-red-600 mb-8 border border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
+                <SpotlightCard isDarkMode={isDarkMode} className={`p-10 flex flex-col h-full group transition-all duration-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-zinc-50'}`}>
+                   <div className={`w-16 h-16 flex items-center justify-center text-red-600 mb-8 border group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 ${isDarkMode ? 'bg-black border-white/5' : 'bg-zinc-100 border-black/5'}`}>
                     {mod.icon}
                   </div>
                   <h3 className="text-2xl font-black italic uppercase mb-4 tracking-tighter group-hover:text-red-600 transition-colors">
@@ -1080,7 +1132,7 @@ const App = () => {
                   <p className="text-zinc-500 text-sm leading-relaxed mb-8">
                     {mod.desc}
                   </p>
-                  <button className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 group-hover:text-white flex items-center gap-2 mt-auto">
+                  <button className={`text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 mt-auto transition-colors ${isDarkMode ? 'text-zinc-400 group-hover:text-white' : 'text-zinc-500 group-hover:text-black'}`}>
                     VER HORÁRIOS <ChevronRight size={12} />
                   </button>
                 </SpotlightCard>
@@ -1091,7 +1143,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: A ACADEMIA (REALIDADE DAS FOTOS) --- */}
-      <section id="academia" className="py-40 bg-black relative overflow-hidden">
+      <section id="academia" className={`py-40 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-zinc-50'}`}>
         <div className="absolute left-0 top-0 h-full flex items-center opacity-[0.02] pointer-events-none select-none">
           <span className="text-[25rem] font-black uppercase italic -rotate-90 origin-center whitespace-nowrap">
             REALITY
@@ -1116,7 +1168,7 @@ const App = () => {
             </FadeIn>
             <FadeIn direction="left">
               <div className="max-w-md text-right lg:pb-4 border-r-4 border-red-600 pr-8">
-                <p className="text-zinc-400 uppercase tracking-widest text-sm leading-relaxed font-bold">
+                <p className={`uppercase tracking-widest text-sm leading-relaxed font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-700'}`}>
                   Esqueça as luzes de neon. Aqui o foco é o suor, o tijolo aparente e a técnica pura.
                 </p>
               </div>
@@ -1162,7 +1214,7 @@ const App = () => {
       </section>
 
       {/* --- SESSÃO: PROFESSOR / DONO --- */}
-      <section id="professor" className="py-40 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+      <section id="professor" className={`py-40 relative overflow-hidden border-t transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950 border-white/5' : 'bg-white border-black/5'}`}>
         <div className="absolute right-0 bottom-0 opacity-[0.02] pointer-events-none select-none">
           <span className="text-[20rem] font-black uppercase italic leading-none">MASTER</span>
         </div>
@@ -1175,7 +1227,7 @@ const App = () => {
               <FadeIn direction="right">
                 <div className="relative group">
                   <div className="absolute -inset-4 border border-red-600/30 -z-10 translate-x-4 translate-y-4 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
-                  <div className="aspect-[3/4] bg-zinc-900 overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 relative">
+                  <div className={`aspect-[3/4] overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 relative ${isDarkMode ? 'bg-zinc-900' : 'bg-zinc-200'}`}>
                     <img 
                       src="/images/professor-felipe.jpg" 
                       className="w-full h-full object-cover object-center opacity-90"
@@ -1184,7 +1236,7 @@ const App = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
                     <div className="absolute bottom-6 left-6">
                       <p className="text-red-600 font-black italic uppercase tracking-widest text-xs mb-1">Head Coach</p>
-                      <h3 className="text-4xl font-black italic uppercase tracking-tighter">Felipe Silva</h3>
+                      <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white">Felipe Silva</h3>
                     </div>
                   </div>
                 </div>
@@ -1209,21 +1261,21 @@ const App = () => {
                   <div className="flex flex-wrap gap-4">
                     <div className="bg-red-600/10 border border-red-600/20 px-4 py-2 flex items-center gap-3">
                       <Medal className="text-red-600" size={20} />
-                      <span className="font-black italic uppercase text-xs tracking-widest">Faixa Preta 3º Grau (CBJJ/IBJJF)</span>
+                      <span className={`font-black italic uppercase text-xs tracking-widest ${isDarkMode ? 'text-white' : 'text-black'}`}>Faixa Preta 3º Grau (CBJJ/IBJJF)</span>
                     </div>
-                    <div className="bg-white/5 border border-white/10 px-4 py-2 flex items-center gap-3">
-                      <Swords className="text-zinc-400" size={20} />
-                      <span className="font-black italic uppercase text-xs tracking-widest">Submission GB-PB (SBJJ)</span>
+                    <div className={`border px-4 py-2 flex items-center gap-3 ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
+                      <Swords className={isDarkMode ? "text-zinc-400" : "text-zinc-600"} size={20} />
+                      <span className={`font-black italic uppercase text-xs tracking-widest ${isDarkMode ? 'text-white' : 'text-black'}`}>Submission GB-PB (SBJJ)</span>
                     </div>
                   </div>
 
                   {/* Lista de Detalhes */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-y border-white/5">
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-y ${isDarkMode ? 'border-white/5' : 'border-black/5'}`}>
                     <div>
                       <h5 className="text-red-600 font-black italic uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
                         <Award size={14} /> Graduações
                       </h5>
-                      <p className="text-zinc-400 text-sm font-light leading-relaxed">
+                      <p className={`text-sm font-light leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
                         Faixa Preta 3º Grau em Jiu-Jitsu, Wrestling e Submission.
                       </p>
                     </div>
@@ -1231,7 +1283,7 @@ const App = () => {
                       <h5 className="text-red-600 font-black italic uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
                         <BookOpen size={14} /> Formação
                       </h5>
-                      <p className="text-zinc-400 text-sm font-light leading-relaxed">
+                      <p className={`text-sm font-light leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
                         Pós-graduando em Educação Física, unindo ciência e prática.
                       </p>
                     </div>
@@ -1239,7 +1291,7 @@ const App = () => {
                       <h5 className="text-red-600 font-black italic uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
                         <Cross size={14} /> Filosofia de Vida
                       </h5>
-                      <p className="text-zinc-300 text-lg italic font-medium leading-relaxed">
+                      <p className={`text-lg italic font-medium leading-relaxed ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
                         "Cristão dedicado ao ensino de valores através das artes marciais."
                       </p>
                     </div>
@@ -1250,7 +1302,7 @@ const App = () => {
                     <motion.a 
                       href="#"
                       whileHover={{ scale: 1.05 }}
-                      className="bg-white text-black px-8 py-4 font-black italic uppercase tracking-widest text-xs -skew-x-12 flex items-center gap-3"
+                      className={`px-8 py-4 font-black italic uppercase tracking-widest text-xs -skew-x-12 flex items-center gap-3 ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}
                     >
                       <Instagram size={18} className="skew-x-12" />
                       <span className="skew-x-12">SIGA O PROFESSOR</span>
@@ -1268,7 +1320,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: E-COMMERCE / LOJA --- */}
-      <section id="loja" className="py-40 bg-zinc-950 relative overflow-hidden">
+      <section id="loja" className={`py-40 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-zinc-50'}`}>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between mb-20">
              <FadeIn direction="right">
@@ -1276,12 +1328,12 @@ const App = () => {
                 <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4">Silva Brothers Armory</span>
                 <h2 className="text-5xl md:text-7xl font-black uppercase italic leading-none tracking-tighter">
                   EQUIPAMENTO <br />
-                  <span className="text-white">DE GUERRA</span>
+                  <span className={isDarkMode ? 'text-white' : 'text-black'}>DE GUERRA</span>
                 </h2>
               </div>
             </FadeIn>
             <FadeIn direction="left">
-               <button disabled className="mt-8 md:mt-0 flex items-center gap-4 bg-white text-black px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 opacity-50 cursor-not-allowed transition-all">
+               <button disabled className={`mt-8 md:mt-0 flex items-center gap-4 px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 opacity-50 cursor-not-allowed transition-all ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
                 <ShoppingBag size={20} />
                 VISITAR E-COMMERCE
               </button>
@@ -1318,7 +1370,7 @@ const App = () => {
                     </div>
                   </div>
 
-                  <div className="aspect-[4/5] bg-zinc-900 border border-white/5 overflow-hidden relative pointer-events-none">
+                  <div className={`aspect-[4/5] border overflow-hidden relative pointer-events-none transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-black/5 shadow-xl'}`}>
                     <div className="absolute top-4 left-4 z-20">
                       <span className="bg-red-600 text-white text-[8px] font-black uppercase px-2 py-1 tracking-widest italic opacity-50">
                         {prod.tag}
@@ -1326,12 +1378,12 @@ const App = () => {
                     </div>
                     <img 
                       src={prod.img} 
-                      className="w-full h-full object-cover grayscale brightness-50"
+                      className={`w-full h-full object-cover grayscale transition-all duration-500 ${isDarkMode ? 'brightness-50' : 'brightness-90 opacity-70'}`}
                       alt={prod.name}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+                    <div className={`absolute inset-0 bg-gradient-to-t opacity-60 ${isDarkMode ? 'from-black via-transparent to-transparent' : 'from-black/80 via-transparent to-transparent'}`} />
                     <div className="absolute bottom-6 left-6 right-6">
-                       <button disabled className="w-full bg-white/10 text-white/50 py-4 font-black italic uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                       <button disabled className={`w-full py-4 font-black italic uppercase text-xs tracking-widest flex items-center justify-center gap-2 ${isDarkMode ? 'bg-white/10 text-white/50' : 'bg-white/90 text-black/50'}`}>
                         <Tag size={14} /> ADICIONAR AO CARRINHO
                       </button>
                     </div>
@@ -1353,7 +1405,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: DIFERENCIAIS --- */}
-      <section id="diferenciais" className="py-40 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+      <section id="diferenciais" className={`py-40 relative overflow-hidden border-t transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950 border-white/5' : 'bg-white border-black/5'}`}>
         {/* Background Decorativo */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/5 blur-[120px] -z-10" />
         <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-red-600/5 blur-[100px] -z-10" />
@@ -1363,8 +1415,8 @@ const App = () => {
             <div className="mb-24">
               <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Por que treinar conosco?</span>
               <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
-                NOSSOS <br />
-                <SplitText text="DIFERENCIAIS" className="text-red-600" baseDelay={0.3} />
+                NOSSAS <br />
+                <SplitText text="VANTAGENS" className="text-red-600" baseDelay={0.3} />
               </h2>
               <div className="h-1 w-24 bg-red-600" />
             </div>
@@ -1373,12 +1425,12 @@ const App = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Tecnologia e Acompanhamento */}
             <FadeIn delay={0.1}>
-              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
-                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+              <SpotlightCard isDarkMode={isDarkMode} className={`p-10 h-full flex flex-col gap-8 group ${isDarkMode ? '' : 'shadow-xl'}`}>
+                <div className={`w-14 h-14 border flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12 ${isDarkMode ? 'bg-zinc-900 border-white/10' : 'bg-zinc-100 border-black/10'}`}>
                   <Zap size={28} className="skew-x-12" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Ecosistema Digital</h3>
+                  <h3 className={`text-2xl font-black italic uppercase tracking-tighter mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>Ecosistema Digital</h3>
                   <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-relaxed mb-8">Gestão moderna para sua evolução constante.</p>
                   <ul className="space-y-5">
                     {[
@@ -1387,7 +1439,7 @@ const App = () => {
                       "Sistema de acompanhamento técnico",
                       "Integração entre modalidades"
                     ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+                      <li key={i} className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-700'}`}>
                         <CheckCircle2 size={16} className="text-red-600 shrink-0" /> {item}
                       </li>
                     ))}
@@ -1398,12 +1450,12 @@ const App = () => {
 
             {/* Qualidade de Ensino */}
             <FadeIn delay={0.2}>
-              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
-                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+              <SpotlightCard isDarkMode={isDarkMode} className={`p-10 h-full flex flex-col gap-8 group ${isDarkMode ? '' : 'shadow-xl'}`}>
+                <div className={`w-14 h-14 border flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12 ${isDarkMode ? 'bg-zinc-900 border-white/10' : 'bg-zinc-100 border-black/10'}`}>
                   <Award size={28} className="skew-x-12" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Metodologia Silva</h3>
+                  <h3 className={`text-2xl font-black italic uppercase tracking-tighter mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>Metodologia Silva</h3>
                   <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-relaxed mb-8">Saber ensinar é a nossa maior graduação.</p>
                   <ul className="space-y-5">
                     {[
@@ -1412,7 +1464,7 @@ const App = () => {
                       "Atenção individual no tatame",
                       "Linhagem e histórico comprovados"
                     ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+                      <li key={i} className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-700'}`}>
                         <CheckCircle2 size={16} className="text-red-600 shrink-0" /> {item}
                       </li>
                     ))}
@@ -1423,12 +1475,12 @@ const App = () => {
 
             {/* Público Alvo */}
             <FadeIn delay={0.3}>
-              <SpotlightCard className="p-10 border-white/5 h-full flex flex-col gap-8 group">
-                <div className="w-14 h-14 bg-zinc-900 border border-white/10 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12">
+              <SpotlightCard isDarkMode={isDarkMode} className={`p-10 h-full flex flex-col gap-8 group ${isDarkMode ? '' : 'shadow-xl'}`}>
+                <div className={`w-14 h-14 border flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-500 -skew-x-12 ${isDarkMode ? 'bg-zinc-900 border-white/10' : 'bg-zinc-100 border-black/10'}`}>
                   <Target size={28} className="skew-x-12" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4">Para todos os perfis</h3>
+                  <h3 className={`text-2xl font-black italic uppercase tracking-tighter mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>Para todos os perfis</h3>
                   <div className="grid grid-cols-2 gap-3">
                     {[
                       { t: "Infantil", e: "👶" },
@@ -1436,9 +1488,9 @@ const App = () => {
                       { t: "Defesa Pessoal", e: "🛡️" },
                       { t: "Hobby / Saúde", e: "🧘" }
                     ].map((p, i) => (
-                      <div key={i} className="bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-2 hover:bg-red-600/10 hover:border-red-600/50 transition-all cursor-default">
+                      <div key={i} className={`border p-4 flex flex-col items-center gap-2 hover:bg-red-600/10 hover:border-red-600/50 transition-all cursor-default ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
                         <span className="text-2xl mb-1">{p.e}</span>
-                        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-300 text-center">{p.t}</span>
+                        <span className={`text-[8px] font-black uppercase tracking-widest text-center ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{p.t}</span>
                       </div>
                     ))}
                   </div>
@@ -1451,7 +1503,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: REDES SOCIAIS (FAIXA) --- */}
-      <section className="bg-zinc-900 border-y border-white/10 py-16 relative overflow-hidden">
+      <section className={`border-y py-16 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900 border-white/10' : 'bg-zinc-100 border-black/10'}`}>
         {/* Marquee Background */}
         <div className="absolute inset-0 flex items-center opacity-[0.03] pointer-events-none select-none">
           <div className="whitespace-nowrap animate-marquee flex">
@@ -1503,7 +1555,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: HORÁRIOS + CONTATO --- */}
-      <section id="agenda" className="py-32 bg-black relative overflow-hidden">
+      <section id="agenda" className={`py-32 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-zinc-50'}`}>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start border-b border-white/5 pb-24">
             
@@ -1529,14 +1581,14 @@ const App = () => {
                       { dia: "QUINTA-FEIRA", aulas: ["12:00 — Jiu-Jitsu Kimono", "19:00 — Jiu-Jitsu Kimono"] },
                       { dia: "SEXTA-FEIRA", aulas: ["16:00 — No-Gi Grappling", "19:00 — Jiu-Jitsu Kimono"] }
                     ].map((row, i) => (
-                      <div key={i} className="group border-b border-white/10 pb-4 hover:border-red-600 transition-colors">
+                      <div key={i} className={`group border-b pb-4 hover:border-red-600 transition-colors ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}>
                         <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-2">
                           <span className="text-zinc-500 font-black italic uppercase text-xs tracking-widest group-hover:text-red-600 transition-colors">
                             {row.dia}
                           </span>
                           <div className="flex flex-col items-end gap-1">
                             {row.aulas.map((aula, idx) => (
-                              <span key={idx} className="text-lg md:text-xl font-black italic uppercase tracking-tighter text-white">
+                              <span key={idx} className={`text-lg md:text-xl font-black italic uppercase tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>
                                 {aula}
                               </span>
                             ))}
@@ -1553,8 +1605,8 @@ const App = () => {
             <FadeIn direction="left">
               <div className="relative group">
                 <div className="absolute -inset-2 bg-gradient-to-br from-red-600 to-zinc-900 opacity-20 blur-xl group-hover:opacity-30 transition-opacity"></div>
-                <div className="relative bg-zinc-900 border border-white/5 p-8 md:p-12 overflow-hidden shadow-2xl">
-                  <div className="absolute -bottom-10 -right-10 text-white/5 pointer-events-none select-none">
+                <div className={`relative border p-8 md:p-12 overflow-hidden shadow-2xl transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-black/5'}`}>
+                  <div className={`absolute -bottom-10 -right-10 pointer-events-none select-none ${isDarkMode ? 'text-white/5' : 'text-black/5'}`}>
                     <Shield size={240} />
                   </div>
                   <h3 className="text-4xl font-black italic uppercase tracking-tighter mb-10 flex items-center gap-4">
@@ -1562,24 +1614,24 @@ const App = () => {
                   </h3>
                   <div className="space-y-10 relative z-10">
                     <div className="group/item flex gap-6 items-start">
-                      <div className="p-3 bg-white/5 border border-white/10 group-hover/item:border-red-600 transition-colors">
+                      <div className={`p-3 border group-hover/item:border-red-600 transition-colors ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
                         <MapPin size={24} className="text-red-600" />
                       </div>
                       <div>
                         <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Localização</h5>
-                        <p className="text-white font-bold italic uppercase tracking-tighter text-lg">
+                        <p className={`font-bold italic uppercase tracking-tighter text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>
                           Campina Grande, PB <br />
-                          <span className="text-zinc-400 text-sm font-normal normal-case italic">Rua do Treino, 123 - Centro</span>
+                          <span className={`text-sm font-normal normal-case italic ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Rua do Treino, 123 - Centro</span>
                         </p>
                       </div>
                     </div>
                     <div className="group/item flex gap-6 items-start">
-                      <div className="p-3 bg-white/5 border border-white/10 group-hover/item:border-red-600 transition-colors">
+                      <div className={`p-3 border group-hover/item:border-red-600 transition-colors ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
                         <Phone size={24} className="text-red-600" />
                       </div>
                       <div>
                         <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">WhatsApp direto</h5>
-                        <p className="text-white font-bold italic uppercase tracking-tighter text-lg">(83) 98888-8888</p>
+                        <p className={`font-bold italic uppercase tracking-tighter text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>(83) 98888-8888</p>
                       </div>
                     </div>
                     <div className="pt-4">
@@ -1599,15 +1651,15 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: PLANOS E PACOTES (UPGRADED LAYOUT) --- */}
-      <section id="planos" className="py-40 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+      <section id="planos" className={`py-40 relative overflow-hidden border-t transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950 border-white/5' : 'bg-white border-black/5'}`}>
         {/* Decoração Background */}
         <div className="absolute top-0 left-0 w-full h-full opacity-[0.02] pointer-events-none">
           <div className="flex rotate-12 scale-150 gap-20">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex flex-col gap-10">
-                <span className="text-[10rem] font-black italic text-stroke">PLANOS</span>
-                <span className="text-[10rem] font-black italic text-stroke">PACOTES</span>
-                <span className="text-[10rem] font-black italic text-stroke">O TEMPLO</span>
+                <span className="text-[10rem] font-black italic text-transparent" style={{ WebkitTextStroke: isDarkMode ? '1px rgba(255,255,255,0.15)' : '1px rgba(0,0,0,0.15)' }}>PLANOS</span>
+                <span className="text-[10rem] font-black italic text-transparent" style={{ WebkitTextStroke: isDarkMode ? '1px rgba(255,255,255,0.15)' : '1px rgba(0,0,0,0.15)' }}>PACOTES</span>
+                <span className="text-[10rem] font-black italic text-transparent" style={{ WebkitTextStroke: isDarkMode ? '1px rgba(255,255,255,0.15)' : '1px rgba(0,0,0,0.15)' }}>O TEMPLO</span>
               </div>
             ))}
           </div>
@@ -1644,7 +1696,7 @@ const App = () => {
                 preco: "Individual",
                 icon: <Zap size={24} />,
                 features: ["Acesso Livre", "Sem Carência", "Aulas Coletivas"],
-                accent: "border-white/10"
+                accent: isDarkMode ? "border-white/10" : "border-black/10"
               },
               {
                 nome: "TRIMESTRAL",
@@ -1652,7 +1704,7 @@ const App = () => {
                 preco: "Evolução",
                 icon: <Target size={24} />,
                 features: ["Desconto Progressivo", "Avaliação Técnica", "Aulas Coletivas"],
-                accent: "border-white/10"
+                accent: isDarkMode ? "border-white/10" : "border-black/10"
               },
               {
                 nome: "SEMESTRAL",
@@ -1669,12 +1721,12 @@ const App = () => {
                 preco: "Imortal",
                 icon: <TrendingUp size={24} />,
                 features: ["Menor Mensalidade", "Semestre Congelável", "Masterclasses Grátis"],
-                accent: "border-white/10"
+                accent: isDarkMode ? "border-white/10" : "border-black/10"
               }
             ].map((plano, i) => (
               <FadeIn key={i} delay={i * 0.1} direction="up">
                 <div className={`relative h-full flex flex-col group ${plano.popular ? 'z-20 -mt-4 lg:-mt-8' : 'z-10'}`}>
-                  <div className={`flex-1 bg-zinc-900/50 backdrop-blur-sm border-2 ${plano.accent} p-8 flex flex-col transition-all duration-700 group-hover:bg-zinc-900 group-hover:border-red-600/50`}>
+                  <div className={`flex-1 backdrop-blur-sm border-2 ${plano.accent} p-8 flex flex-col transition-all duration-700 ${isDarkMode ? 'bg-zinc-900/50 group-hover:bg-zinc-900' : 'bg-white/80 group-hover:bg-white'} group-hover:border-red-600/50`}>
                     
                     {plano.popular && (
                       <div className="absolute top-0 right-0 bg-red-600 text-white px-4 py-1 text-[8px] font-black italic tracking-[0.3em] -rotate-0">
@@ -1704,9 +1756,9 @@ const App = () => {
                     <div className="mt-auto">
                       <div className="mb-6">
                         <span className="text-zinc-600 text-[8px] font-black uppercase block tracking-widest mb-1">Status do Plano</span>
-                        <span className="text-xl font-black italic uppercase tracking-tighter">{plano.preco}</span>
+                        <span className={`text-xl font-black italic uppercase tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>{plano.preco}</span>
                       </div>
-                      <button className={`w-full py-5 text-[10px] font-black italic uppercase tracking-[0.3em] transition-all duration-500 border ${plano.popular ? 'bg-red-600 border-red-600 text-white hover:bg-white hover:text-black hover:border-white' : 'bg-transparent border-white/10 text-white hover:bg-red-600 hover:border-red-600'}`}>
+                      <button className={`w-full py-5 text-[10px] font-black italic uppercase tracking-[0.3em] transition-all duration-500 border ${plano.popular ? 'bg-red-600 border-red-600 text-white hover:bg-black hover:text-white hover:border-black' : isDarkMode ? 'bg-transparent border-white/10 text-white hover:bg-red-600 hover:border-red-600' : 'bg-transparent border-black/10 text-black hover:bg-red-600 hover:text-white hover:border-red-600'}`}>
                         SOLICITAR VALORES
                       </button>
                     </div>
@@ -1721,10 +1773,10 @@ const App = () => {
             <FadeIn direction="up">
               <div className="relative group overflow-hidden">
                 <div className="absolute inset-0 bg-red-600 translate-y-[90%] group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
-                <div className="relative border-2 border-white/5 p-12 flex flex-col md:flex-row items-center justify-between gap-8 bg-zinc-900 group-hover:bg-transparent transition-colors duration-700">
+                <div className={`relative border-2 p-12 flex flex-col md:flex-row items-center justify-between gap-8 group-hover:bg-transparent transition-colors duration-700 ${isDarkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-black/5 shadow-2xl'}`}>
                   
                   <div className="flex flex-col md:flex-row items-center gap-10">
-                    <div className="w-24 h-24 bg-black border border-white/10 flex items-center justify-center text-red-600 group-hover:text-white group-hover:border-white transition-all duration-700">
+                    <div className={`w-24 h-24 border flex items-center justify-center text-red-600 group-hover:text-white group-hover:border-white transition-all duration-700 ${isDarkMode ? 'bg-black border-white/10' : 'bg-zinc-100 border-black/10'}`}>
                       <Flame size={48} />
                     </div>
                     <div className="text-center md:text-left">
@@ -1753,7 +1805,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: DEPOIMENTOS / PROVA SOCIAL --- */}
-      <section className="py-32 bg-zinc-950 relative overflow-hidden border-t border-white/5">
+      <section className={`py-32 relative overflow-hidden border-t transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950 border-white/5' : 'bg-zinc-50 border-black/5'}`}>
         {/* Background decorativo */}
         <div className="absolute inset-0 pointer-events-none select-none opacity-[0.025]">
           <div className="flex items-center h-full">
@@ -1813,7 +1865,7 @@ const App = () => {
               }
             ].map((dep, i) => (
               <FadeIn key={i} delay={i * 0.1} direction="up">
-                <SpotlightCard className="p-8 flex flex-col h-full group hover:bg-zinc-900 transition-all duration-500">
+                <SpotlightCard isDarkMode={isDarkMode} className={`p-8 flex flex-col h-full group transition-all duration-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-white shadow-md'}`}>
                   {/* Stars */}
                   <div className="flex gap-1 mb-6">
                     {[...Array(5)].map((_, s) => (
@@ -1825,12 +1877,12 @@ const App = () => {
                   <Quote size={24} className="text-red-600/30 mb-4 group-hover:text-red-600/60 transition-colors" />
 
                   {/* Texto */}
-                  <p className="text-zinc-400 text-sm leading-relaxed italic flex-1 group-hover:text-zinc-300 transition-colors">
+                  <p className={`text-sm leading-relaxed italic flex-1 transition-colors ${isDarkMode ? 'text-zinc-400 group-hover:text-zinc-300' : 'text-zinc-600 group-hover:text-black'}`}>
                     "{dep.texto}"
                   </p>
 
                   {/* Divisor */}
-                  <div className="h-[1px] bg-white/5 my-6 group-hover:bg-red-600/30 transition-colors" />
+                  <div className={`h-[1px] my-6 group-hover:bg-red-600/30 transition-colors ${isDarkMode ? 'bg-white/5' : 'bg-black/5'}`} />
 
                   {/* Autor */}
                   <div className="flex items-center gap-4">
@@ -1838,7 +1890,7 @@ const App = () => {
                       {dep.inicial}
                     </div>
                     <div>
-                      <span className="block text-white font-black italic uppercase tracking-tighter text-sm">{dep.nome}</span>
+                      <span className={`block font-black italic uppercase tracking-tighter text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>{dep.nome}</span>
                       <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Aluno CT Silva Brothers</span>
                     </div>
                   </div>
@@ -1870,7 +1922,7 @@ const App = () => {
       </section>
 
 
-      <footer className="bg-black border-t border-white/10 relative overflow-hidden">
+      <footer className={`border-t relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-black border-white/10' : 'bg-white border-black/10'}`}>
         {/* Faixa superior vermelha com CTA */}
         <div className="bg-red-600 py-12 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 flex items-center pointer-events-none select-none">
@@ -1920,7 +1972,7 @@ const App = () => {
 
             {/* Coluna 1: Logo e Descrição */}
             <div className="lg:col-span-1">
-              <div className="flex flex-col leading-none italic font-black mb-6">
+              <div className={`flex flex-col leading-none italic font-black mb-6 ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 <span className="text-3xl tracking-tighter">CT SILVA</span>
                 <span className="text-red-600 text-[10px] tracking-[0.4em] -mt-1">BROTHERS</span>
               </div>
@@ -1939,7 +1991,7 @@ const App = () => {
                     aria-label={s.label}
                     whileHover={{ scale: 1.1, y: -3 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-10 h-10 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white hover:border-red-600 hover:bg-red-600/10 transition-all duration-300"
+                    className={`w-10 h-10 border flex items-center justify-center text-zinc-500 hover:text-white hover:border-red-600 hover:bg-red-600/10 transition-all duration-300 ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}
                   >
                     {s.icon}
                   </motion.a>
@@ -1949,7 +2001,7 @@ const App = () => {
 
             {/* Coluna 2: Navegação */}
             <div>
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+              <h5 className={`text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 <div className="h-[2px] w-4 bg-red-600" />
                 Navegação
               </h5>
@@ -1978,7 +2030,7 @@ const App = () => {
 
             {/* Coluna 3: Modalidades */}
             <div>
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+              <h5 className={`text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 <div className="h-[2px] w-4 bg-red-600" />
                 Modalidades
               </h5>
@@ -1996,7 +2048,7 @@ const App = () => {
 
             {/* Coluna 4: Contato */}
             <div>
-              <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-6 flex items-center gap-3">
+              <h5 className={`text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 <div className="h-[2px] w-4 bg-red-600" />
                 Contato
               </h5>
@@ -2004,21 +2056,21 @@ const App = () => {
                 <li className="flex items-start gap-4">
                   <MapPin size={16} className="text-red-600 mt-0.5 shrink-0" />
                   <div>
-                    <span className="block text-white text-xs font-bold uppercase tracking-widest">Campina Grande, PB</span>
+                    <span className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-black'}`}>Campina Grande, PB</span>
                     <span className="text-zinc-600 text-[11px] font-normal">Rua do Treino, 123 — Centro</span>
                   </div>
                 </li>
                 <li className="flex items-start gap-4">
                   <Phone size={16} className="text-red-600 mt-0.5 shrink-0" />
                   <div>
-                    <span className="block text-white text-xs font-bold uppercase tracking-widest">(83) 98888-8888</span>
+                    <span className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-black'}`}>(83) 98888-8888</span>
                     <span className="text-zinc-600 text-[11px]">WhatsApp disponível</span>
                   </div>
                 </li>
                 <li className="flex items-start gap-4">
                   <Clock size={16} className="text-red-600 mt-0.5 shrink-0" />
                   <div>
-                    <span className="block text-white text-xs font-bold uppercase tracking-widest">Seg — Sex</span>
+                    <span className={`block text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-black'}`}>Seg — Sex</span>
                     <span className="text-zinc-600 text-[11px]">12h às 21h</span>
                   </div>
                 </li>
@@ -2029,7 +2081,7 @@ const App = () => {
         </div>
 
         {/* Barra de copyright */}
-        <div className="border-t border-white/5 py-6">
+        <div className={`border-t py-6 ${isDarkMode ? 'border-white/5' : 'border-black/5'}`}>
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">
               © {new Date().getFullYear()} CT Silva Brothers. Todos os direitos reservados.
