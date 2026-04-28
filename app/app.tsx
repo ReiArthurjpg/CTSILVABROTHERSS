@@ -691,13 +691,13 @@ const App = () => {
           </motion.a>
 
           {/* Links Desktop */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden xl:flex items-center gap-4 2xl:gap-8">
             {navLinks.map((link, i) => (
               <motion.a
                 key={link.name}
                 href={link.href}
                 onClick={(e) => scrollToSection(e, link.href)}
-                className={`relative text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 py-1 group ${
+                className={`relative text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 py-1 whitespace-nowrap group ${
                   isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-black'
                 }`}
                 initial={{ opacity: 0, y: -10 }}
@@ -711,12 +711,12 @@ const App = () => {
             ))}
 
             {/* Separador */}
-            <div className={`h-4 w-[1px] ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
+            <div className={`h-4 w-[1px] ml-2 mr-2 ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
 
             {/* Botão Tema */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${
                 isDarkMode ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-black hover:bg-black/10'
               }`}
             >
@@ -725,7 +725,7 @@ const App = () => {
 
             {/* Botão CTA */}
             <motion.button
-              className="relative bg-red-600 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden group"
+              className="relative bg-red-600 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden shrink-0 group ml-2"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, x: 20 }}
@@ -740,7 +740,7 @@ const App = () => {
             </motion.button>
           </div>
 
-          <div className="flex items-center gap-4 lg:hidden">
+          <div className="flex items-center gap-4 xl:hidden">
             {/* Theme Toggle Mobile */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
