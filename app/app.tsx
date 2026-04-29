@@ -597,6 +597,22 @@ const App = () => {
           animation: marquee 20s linear infinite;
         }
 
+        .glass-island {
+          backdrop-filter: blur(16px) saturate(180%);
+          -webkit-backdrop-filter: blur(16px) saturate(180%);
+        }
+
+        .shimmer-effect {
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+          background-size: 200% 100%;
+          animation: shimmer 3s infinite linear;
+        }
+
+        @keyframes shimmer {
+          0% { background-position: 100% 0; }
+          100% { background-position: -100% 0; }
+        }
+
         /* === REACT BITS: GlitchText === */
         .glitch-hero {
           position: relative;
@@ -657,25 +673,26 @@ const App = () => {
 
       {/* Navegação */}
       <motion.nav
-        className={`fixed w-full z-50 transition-colors duration-700 ${
+        className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-700 ease-[0.16,1,0.3,1] ${
           scrolled 
-            ? isDarkMode ? 'bg-black/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-xl shadow-sm'
-            : 'bg-transparent'
-        }`}
+            ? 'top-4 w-[95%] max-w-[1400px] rounded-2xl border border-white/10 bg-black/80 shadow-2xl glass-island py-2 px-4' 
+            : 'top-0 w-full bg-transparent py-4 px-6'
+        } ${!isDarkMode && scrolled ? 'bg-white/80 border-black/5 shadow-lg' : ''}`}
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* Linha inferior animada */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-600 to-transparent"
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: scrolled ? 1 : 0, opacity: scrolled ? 1 : 0 }}
-          transition={{ duration: 0.5 }}
-          style={{ width: '100%', transformOrigin: 'center' }}
-        />
+        {/* Linha inferior animada (apenas quando não flutuante) */}
+        {!scrolled && (
+          <motion.div
+            className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-600 to-transparent"
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 0.3 }}
+            style={{ width: '100%', transformOrigin: 'center' }}
+          />
+        )}
 
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center py-4">
+        <div className="mx-auto flex justify-between items-center h-12">
           
           {/* Logo */}
           <motion.a
@@ -684,57 +701,57 @@ const App = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex flex-col leading-none italic font-black">
-              <span className={`text-xl tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>CT SILVA</span>
-              <span className="text-red-600 text-[9px] tracking-[0.4em] -mt-0.5">BROTHERS</span>
+            <div className="flex flex-col leading-none italic font-black group-hover:text-red-500 transition-colors">
+              <span className={`text-lg tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>CT SILVA</span>
+              <span className="text-red-600 text-[8px] tracking-[0.5em] -mt-0.5">BROTHERS</span>
             </div>
           </motion.a>
 
           {/* Links Desktop */}
-          <div className="hidden xl:flex items-center gap-4 2xl:gap-8">
+          <div className="hidden xl:flex items-center gap-2 2xl:gap-6 bg-white/5 rounded-full px-4 py-1.5 border border-white/5">
             {navLinks.map((link, i) => (
               <motion.a
                 key={link.name}
                 href={link.href}
                 onClick={(e) => scrollToSection(e, link.href)}
-                className={`relative text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 py-1 whitespace-nowrap group ${
+                className={`relative text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-300 px-3 py-1.5 rounded-full group ${
                   isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-black'
                 }`}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 + i * 0.05 }}
               >
-                {link.name}
-                {/* Underline animado */}
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-red-600 group-hover:w-full transition-all duration-300" />
+                <span className="relative z-10">{link.name}</span>
+                {/* Destaque ao passar o mouse */}
+                <span className="absolute inset-0 bg-red-600/10 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
               </motion.a>
             ))}
+          </div>
 
-            {/* Separador */}
-            <div className={`h-4 w-[1px] ml-2 mr-2 ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
-
+          <div className="flex items-center gap-3">
             {/* Botão Tema */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${
-                isDarkMode ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-black hover:bg-black/10'
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 ${
+                isDarkMode ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-black/5 text-black hover:bg-black/10'
               }`}
             >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
 
             {/* Botão CTA */}
             <motion.button
-              className="relative bg-red-600 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden shrink-0 group ml-2"
+              className="relative bg-gradient-to-r from-red-600 to-red-800 px-6 py-2.5 font-black text-[10px] uppercase tracking-widest italic -skew-x-12 overflow-hidden shrink-0 group shadow-lg shadow-red-600/20"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
             >
-              <span className="absolute cursor-pointer inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              <span className={`relative cursor-pointer z-10 ${isDarkMode ? 'text-white' : 'text-white'} group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2`}>
-                <Flame size={12} className="skew-x-12" />
+              <div className="absolute inset-0 shimmer-effect opacity-30" />
+              <span className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <span className={`relative z-10 ${isDarkMode ? 'text-white' : 'text-white'} group-hover:text-black transition-colors duration-300 skew-x-12 flex items-center gap-2`}>
+                <Flame size={12} className="fill-current" />
                 AULA GRÁTIS
               </span>
             </motion.button>
