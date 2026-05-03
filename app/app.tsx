@@ -1927,7 +1927,7 @@ const App = () => {
                 <div>
                   <span className="text-red-600 group-hover:text-white font-black italic uppercase tracking-[0.3em] text-[10px] block mb-4 transition-colors">Sua história começa aqui</span>
                   <h4 className="text-3xl font-black italic uppercase leading-tight tracking-tighter group-hover:text-white transition-colors">
-                    SEJA O PRÓXIMO <span className="text-red-600 group-hover:text-white">CASE</span> DE SUCESSO
+                    SEJA A PRÓXIMA <span className="text-red-600 group-hover:text-white">HISTÓRIA</span> DE SUCESSO
                   </h4>
                 </div>
                 <div className="mt-8 flex items-center gap-3 text-zinc-500 group-hover:text-white transition-colors font-black italic uppercase text-[10px] tracking-widest">
