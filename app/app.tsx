@@ -108,7 +108,7 @@ const SplitText = ({ text, className = "", baseDelay = 0, charDelay = 0.04 }) =>
   const isInView = useInView(ref, { once: true });
   const chars = text.split('');
   return (
-    <span ref={ref} className={`inline-block ${className}`} aria-label={text}>
+    <span ref={ref} className={`inline-block whitespace-nowrap ${className}`} aria-label={text}>
       {chars.map((char, i) => (
         <motion.span
           key={i}
@@ -728,7 +728,7 @@ const App = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3">
             {/* Botão Tema */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -856,7 +856,7 @@ const App = () => {
             Campina Grande • PB
           </motion.span>
 
-          <h1 className="text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden">
+          <h1 className="text-5xl sm:text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden">
             <SplitText
               text="FORJANDO"
               className="block"
@@ -997,7 +997,7 @@ const App = () => {
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-0">
             <div className="lg:col-span-6 lg:pt-20 relative z-20">
               <FadeIn direction="right">
-                <h2 className="text-6xl md:text-[8rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
+                <h2 className="text-4xl sm:text-6xl md:text-[8rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A FORÇA DO <br />
                   <span className="text-red-600">COLETIVO</span>
                 </h2>
@@ -1105,7 +1105,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <FadeIn direction="up">
             <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+              <h2 className="text-3xl sm:text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
                 NOSSAS <span className="text-red-600">MODALIDADES</span>
               </h2>
               <p className={`text-lg md:text-xl font-light max-w-2xl mx-auto border-t border-red-600/30 pt-4 uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -1172,7 +1172,7 @@ const App = () => {
             <FadeIn direction="right">
               <div className="max-w-4xl">
                 <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Ambiente Old School</span>
-                <h2 className="text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter">
+                <h2 className="text-4xl sm:text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter">
                   NOSSO <br />
                   <SplitText
                     text="CENTRO DE TREINO"
@@ -1263,7 +1263,7 @@ const App = () => {
             {/* Informações do Professor */}
             <div className="lg:col-span-7">
               <FadeIn direction="left">
-                <h2 className="text-5xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
+                <h2 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A MENTE POR TRÁS <br />
                   <SplitText
                     text="DO TATAME"
