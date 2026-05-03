@@ -108,7 +108,7 @@ const SplitText = ({ text, className = "", baseDelay = 0, charDelay = 0.04 }) =>
   const isInView = useInView(ref, { once: true });
   const chars = text.split('');
   return (
-    <span ref={ref} className={`inline-block ${className}`} aria-label={text}>
+    <span ref={ref} className={`inline-block whitespace-nowrap ${className}`} aria-label={text}>
       {chars.map((char, i) => (
         <motion.span
           key={i}
@@ -673,7 +673,7 @@ const App = () => {
 
       {/* Navegação */}
       <motion.nav
-        className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-700 ease-[0.16,1,0.3,1] ${
+        className={`hidden xl:block fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-700 ease-[0.16,1,0.3,1] ${
           scrolled 
             ? 'top-4 w-[95%] max-w-[1400px] rounded-2xl border border-white/10 bg-black/80 shadow-2xl glass-island py-2 px-4' 
             : 'top-0 w-full bg-transparent py-4 px-6'
@@ -728,7 +728,7 @@ const App = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3">
             {/* Botão Tema */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -758,38 +758,9 @@ const App = () => {
           </div>
 
           <div className="flex items-center gap-4 xl:hidden">
-            {/* Theme Toggle Mobile */}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                isDarkMode ? 'text-white' : 'text-black'
-              }`}
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            {/* Menu Toggle Mobile removido o theme toggle daqui */}
 
-            {/* Menu Toggle Mobile */}
-            <motion.button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
-              whileTap={{ scale: 0.9 }}
-            >
-              <motion.span
-                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
-                animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
-                transition={{ duration: 0.3 }}
-              />
-              <motion.span
-                className="w-6 h-[2px] bg-red-600 block"
-                animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
-                transition={{ duration: 0.3 }}
-              />
-              <motion.span
-                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
-                animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
-                transition={{ duration: 0.3 }}
-              />
-            </motion.button>
+            {/* Menu Toggle Mobile removido */}
           </div>
         </div>
 
@@ -830,6 +801,26 @@ const App = () => {
                 >
                   AULA GRÁTIS
                 </motion.button>
+
+                {/* Theme Toggle no Menu Mobile */}
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className={`mt-6 pt-6 border-t flex items-center justify-between ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}
+                >
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    Modo {isDarkMode ? 'Escuro' : 'Claro'}
+                  </span>
+                  <button
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                      isDarkMode ? 'bg-white/5 text-white' : 'bg-black/5 text-black'
+                    }`}
+                  >
+                    {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                  </button>
+                </motion.div>
               </div>
             </motion.div>
           )}
@@ -837,7 +828,7 @@ const App = () => {
       </motion.nav>
 
       {/* Hero */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden pb-32 md:pb-0">
         <div className={`absolute inset-0 z-0 transition-colors duration-1000 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
           <img 
             src="https://wallpapers.com/images/hd/jiu-jitsu-1920-x-1080-5apb8ujim4llp13f.jpg" 
@@ -848,7 +839,7 @@ const App = () => {
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <motion.span
-            className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4"
+            className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-6 text-center md:text-left"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -856,7 +847,7 @@ const App = () => {
             Campina Grande • PB
           </motion.span>
 
-          <h1 className="text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden">
+          <h1 className="text-5xl sm:text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden text-center md:text-left">
             <SplitText
               text="FORJANDO"
               className="block"
@@ -871,14 +862,16 @@ const App = () => {
             />
           </h1>
 
-          <motion.div
-            className="h-1 bg-red-600 mb-8"
-            initial={{ width: 0 }}
-            animate={{ width: 96 }}
-            transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
-          />
+          <div className="flex justify-center md:justify-start mb-8">
+            <motion.div
+              className="h-1 bg-red-600"
+              initial={{ width: 0 }}
+              animate={{ width: 96 }}
+              transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
+            />
+          </div>
           <motion.p
-            className={`${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'} max-w-xl text-lg md:text-xl font-light`}
+            className={`${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'} max-w-xl text-base md:text-xl font-light text-center md:text-left mx-auto md:mx-0`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
@@ -977,7 +970,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: A FORÇA DO COLETIVO --- */}
-      <section id="esporte" className={`relative py-40 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`}>
+      <section id="esporte" className={`hidden lg:block relative py-40 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`}>
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
           <div className={`max-w-7xl mx-auto h-full grid grid-cols-12 gap-0 border-x ${isDarkMode ? 'border-white' : 'border-black'}`}>
             {[...Array(11)].map((_, i) => <div key={i} className={`border-r h-full ${isDarkMode ? 'border-white' : 'border-black'}`} />)}
@@ -997,7 +990,7 @@ const App = () => {
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-0">
             <div className="lg:col-span-6 lg:pt-20 relative z-20">
               <FadeIn direction="right">
-                <h2 className="text-6xl md:text-[8rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
+                <h2 className="text-4xl sm:text-6xl md:text-[8rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A FORÇA DO <br />
                   <span className="text-red-600">COLETIVO</span>
                 </h2>
@@ -1105,7 +1098,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <FadeIn direction="up">
             <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+              <h2 className="text-3xl sm:text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
                 NOSSAS <span className="text-red-600">MODALIDADES</span>
               </h2>
               <p className={`text-lg md:text-xl font-light max-w-2xl mx-auto border-t border-red-600/30 pt-4 uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -1114,7 +1107,7 @@ const App = () => {
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { 
                 title: 'Jiu-Jitsu', 
@@ -1135,6 +1128,16 @@ const App = () => {
                 title: 'Wrestling', 
                 desc: 'Domine as quedas e o controle posicional no tatame.', 
                 icon: <Flame size={32} /> 
+              },
+              { 
+                title: 'Muay Thai', 
+                desc: 'A arte das oito armas: técnica refinada de chutes, socos, cotovelos e joelhadas.', 
+                icon: <Zap size={32} /> 
+              },
+              { 
+                title: 'No-Gi', 
+                desc: 'O Jiu-Jitsu sem kimono, focado em velocidade, explosão e controle posicional técnico.', 
+                icon: <Wind size={32} /> 
               }
             ].map((mod, i) => (
               <FadeIn key={i} delay={i * 0.15}>
@@ -1168,11 +1171,11 @@ const App = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row items-end justify-between mb-24 gap-10">
+          <div className="flex flex-col lg:flex-row items-center lg:items-end justify-between mb-16 lg:mb-24 gap-10">
             <FadeIn direction="right">
               <div className="max-w-4xl">
-                <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Ambiente Old School</span>
-                <h2 className="text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter">
+                <span className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-6 text-center lg:text-left">Ambiente Old School</span>
+                <h2 className="text-3xl sm:text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter text-center lg:text-left">
                   NOSSO <br />
                   <SplitText
                     text="CENTRO DE TREINO"
@@ -1184,8 +1187,8 @@ const App = () => {
               </div>
             </FadeIn>
             <FadeIn direction="left">
-              <div className="max-w-md text-right lg:pb-4 border-r-4 border-red-600 pr-8">
-                <p className={`uppercase tracking-widest text-sm leading-relaxed font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-700'}`}>
+              <div className="max-w-md text-center lg:text-right lg:pb-4 border-b-4 lg:border-b-0 lg:border-r-4 border-red-600 pb-6 lg:pb-0 lg:pr-8 mx-auto lg:mx-0">
+                <p className={`uppercase tracking-widest text-xs sm:text-sm leading-relaxed font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-700'}`}>
                   Esqueça as luzes de neon. Aqui o foco é o suor, o tijolo aparente e a técnica pura.
                 </p>
               </div>
@@ -1263,7 +1266,7 @@ const App = () => {
             {/* Informações do Professor */}
             <div className="lg:col-span-7">
               <FadeIn direction="left">
-                <h2 className="text-5xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
+                <h2 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter mb-10">
                   A MENTE POR TRÁS <br />
                   <SplitText
                     text="DO TATAME"
@@ -1339,18 +1342,18 @@ const App = () => {
       {/* --- SEÇÃO: E-COMMERCE / LOJA --- */}
       <section id="loja" className={`py-40 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-zinc-50'}`}>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-20">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-16 lg:mb-20 gap-8">
              <FadeIn direction="right">
               <div>
-                <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4">Silva Brothers Armory</span>
-                <h2 className="text-5xl md:text-7xl font-black uppercase italic leading-none tracking-tighter">
+                <span className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-4 text-center md:text-left">Silva Brothers Armory</span>
+                <h2 className="text-3xl sm:text-5xl md:text-7xl font-black uppercase italic leading-none tracking-tighter text-center md:text-left">
                   EQUIPAMENTO <br />
                   <span className={isDarkMode ? 'text-white' : 'text-black'}>DE GUERRA</span>
                 </h2>
               </div>
             </FadeIn>
             <FadeIn direction="left">
-               <button disabled className={`mt-8 md:mt-0 flex items-center gap-4 px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 opacity-50 cursor-not-allowed transition-all ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                <button disabled className={`mt-4 md:mt-0 flex items-center gap-4 px-8 py-4 font-black italic uppercase tracking-widest text-xs -skew-x-12 opacity-50 cursor-not-allowed transition-all mx-auto md:mx-0 ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
                 <ShoppingBag size={20} />
                 VISITAR E-COMMERCE
               </button>
@@ -1429,9 +1432,9 @@ const App = () => {
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <FadeIn direction="up">
-            <div className="mb-24">
-              <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Por que treinar conosco?</span>
-              <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+            <div className="mb-16 md:mb-24 flex flex-col items-center md:items-start text-center md:text-left">
+              <span className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-6">Por que treinar conosco?</span>
+              <h2 className="text-4xl sm:text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
                 NOSSAS <br />
                 <SplitText text="VANTAGENS" className="text-red-600" baseDelay={0.3} />
               </h2>
@@ -1683,10 +1686,10 @@ const App = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
+          <div className="flex flex-col md:flex-row items-center md:items-end justify-between mb-16 md:mb-24 gap-8">
             <FadeIn direction="right">
-              <div>
-                <h2 className="text-6xl md:text-9xl font-black italic uppercase tracking-tighter leading-[0.8] mb-4">
+              <div className="flex flex-col items-center md:items-start">
+                <h2 className="text-4xl sm:text-7xl md:text-9xl font-black italic uppercase tracking-tighter leading-[0.8] mb-4 text-center md:text-left">
                   ESCOLHA <br />
                   <SplitText
                     text="SEU PLANO"
@@ -1699,7 +1702,7 @@ const App = () => {
               </div>
             </FadeIn>
             <FadeIn direction="left">
-              <p className="text-zinc-500 max-w-sm text-right font-black italic uppercase text-xs tracking-widest leading-loose border-r-4 border-white/10 pr-6">
+              <p className="text-zinc-500 max-w-sm text-center md:text-right font-black italic uppercase text-[10px] sm:text-xs tracking-widest leading-loose border-b-4 md:border-b-0 md:border-r-4 border-white/10 pb-6 md:pb-0 md:pr-6 mx-auto md:mx-0">
                 Investimento focado em performance. Sem taxas escondidas, apenas a verdade do tatame.
               </p>
             </FadeIn>
@@ -2052,7 +2055,7 @@ const App = () => {
                 Modalidades
               </h5>
               <ul className="space-y-3">
-                {['Jiu-Jitsu Kimono', 'No-Gi Grappling', 'Submission', 'Wrestling', 'Defesa Pessoal', 'Jiu-Jitsu Kids'].map((m) => (
+                {['Jiu-Jitsu', 'No-Gi', 'Submission', 'Wrestling', 'Muay Thai', 'Defesa Pessoal', 'Jiu-Jitsu Kids'].map((m) => (
                   <li key={m}>
                     <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
                       <div className="w-1 h-1 bg-red-600 rounded-full" />
