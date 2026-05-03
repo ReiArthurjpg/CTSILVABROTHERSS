@@ -828,7 +828,7 @@ const App = () => {
       </motion.nav>
 
       {/* Hero */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden pb-32 md:pb-0">
         <div className={`absolute inset-0 z-0 transition-colors duration-1000 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
           <img 
             src="https://wallpapers.com/images/hd/jiu-jitsu-1920-x-1080-5apb8ujim4llp13f.jpg" 
@@ -839,7 +839,7 @@ const App = () => {
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <motion.span
-            className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4"
+            className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-6 text-center md:text-left"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -847,7 +847,7 @@ const App = () => {
             Campina Grande • PB
           </motion.span>
 
-          <h1 className="text-5xl sm:text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden">
+          <h1 className="text-5xl sm:text-7xl md:text-[9rem] font-black uppercase italic leading-[0.8] tracking-tighter mb-8 overflow-hidden text-center md:text-left">
             <SplitText
               text="FORJANDO"
               className="block"
@@ -862,14 +862,16 @@ const App = () => {
             />
           </h1>
 
-          <motion.div
-            className="h-1 bg-red-600 mb-8"
-            initial={{ width: 0 }}
-            animate={{ width: 96 }}
-            transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
-          />
+          <div className="flex justify-center md:justify-start mb-8">
+            <motion.div
+              className="h-1 bg-red-600"
+              initial={{ width: 0 }}
+              animate={{ width: 96 }}
+              transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
+            />
+          </div>
           <motion.p
-            className={`${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'} max-w-xl text-lg md:text-xl font-light`}
+            className={`${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'} max-w-xl text-base md:text-xl font-light text-center md:text-left mx-auto md:mx-0`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
