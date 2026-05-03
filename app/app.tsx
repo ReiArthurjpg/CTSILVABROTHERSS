@@ -1161,11 +1161,11 @@ const App = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row items-end justify-between mb-24 gap-10">
+          <div className="flex flex-col lg:flex-row items-center lg:items-end justify-between mb-16 lg:mb-24 gap-10">
             <FadeIn direction="right">
               <div className="max-w-4xl">
-                <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Ambiente Old School</span>
-                <h2 className="text-4xl sm:text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter">
+                <span className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-6 text-center lg:text-left">Ambiente Old School</span>
+                <h2 className="text-3xl sm:text-6xl md:text-7xl font-black uppercase italic leading-[0.8] tracking-tighter text-center lg:text-left">
                   NOSSO <br />
                   <SplitText
                     text="CENTRO DE TREINO"
@@ -1177,8 +1177,8 @@ const App = () => {
               </div>
             </FadeIn>
             <FadeIn direction="left">
-              <div className="max-w-md text-right lg:pb-4 border-r-4 border-red-600 pr-8">
-                <p className={`uppercase tracking-widest text-sm leading-relaxed font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-700'}`}>
+              <div className="max-w-md text-center lg:text-right lg:pb-4 border-b-4 lg:border-b-0 lg:border-r-4 border-red-600 pb-6 lg:pb-0 lg:pr-8 mx-auto lg:mx-0">
+                <p className={`uppercase tracking-widest text-xs sm:text-sm leading-relaxed font-bold ${isDarkMode ? 'text-zinc-400' : 'text-zinc-700'}`}>
                   Esqueça as luzes de neon. Aqui o foco é o suor, o tijolo aparente e a técnica pura.
                 </p>
               </div>
