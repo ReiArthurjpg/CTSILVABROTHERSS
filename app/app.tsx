@@ -673,7 +673,7 @@ const App = () => {
 
       {/* Navegação */}
       <motion.nav
-        className={`fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-700 ease-[0.16,1,0.3,1] ${
+        className={`hidden xl:block fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-700 ease-[0.16,1,0.3,1] ${
           scrolled 
             ? 'top-4 w-[95%] max-w-[1400px] rounded-2xl border border-white/10 bg-black/80 shadow-2xl glass-island py-2 px-4' 
             : 'top-0 w-full bg-transparent py-4 px-6'
@@ -758,38 +758,9 @@ const App = () => {
           </div>
 
           <div className="flex items-center gap-4 xl:hidden">
-            {/* Theme Toggle Mobile */}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                isDarkMode ? 'text-white' : 'text-black'
-              }`}
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            {/* Menu Toggle Mobile removido o theme toggle daqui */}
 
-            {/* Menu Toggle Mobile */}
-            <motion.button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] group"
-              whileTap={{ scale: 0.9 }}
-            >
-              <motion.span
-                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
-                animate={{ rotate: isMenuOpen ? 45 : 0, y: isMenuOpen ? 7 : 0 }}
-                transition={{ duration: 0.3 }}
-              />
-              <motion.span
-                className="w-6 h-[2px] bg-red-600 block"
-                animate={{ opacity: isMenuOpen ? 0 : 1, scaleX: isMenuOpen ? 0 : 1 }}
-                transition={{ duration: 0.3 }}
-              />
-              <motion.span
-                className={`w-6 h-[2px] ${isDarkMode ? 'bg-white' : (scrolled ? 'bg-black' : 'bg-black')} block`}
-                animate={{ rotate: isMenuOpen ? -45 : 0, y: isMenuOpen ? -7 : 0 }}
-                transition={{ duration: 0.3 }}
-              />
-            </motion.button>
+            {/* Menu Toggle Mobile removido */}
           </div>
         </div>
 
@@ -830,6 +801,26 @@ const App = () => {
                 >
                   AULA GRÁTIS
                 </motion.button>
+
+                {/* Theme Toggle no Menu Mobile */}
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className={`mt-6 pt-6 border-t flex items-center justify-between ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}
+                >
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    Modo {isDarkMode ? 'Escuro' : 'Claro'}
+                  </span>
+                  <button
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                      isDarkMode ? 'bg-white/5 text-white' : 'bg-black/5 text-black'
+                    }`}
+                  >
+                    {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                  </button>
+                </motion.div>
               </div>
             </motion.div>
           )}
@@ -977,7 +968,7 @@ const App = () => {
       </section>
 
       {/* --- SEÇÃO: A FORÇA DO COLETIVO --- */}
-      <section id="esporte" className={`relative py-40 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`}>
+      <section id="esporte" className={`hidden lg:block relative py-40 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`}>
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
           <div className={`max-w-7xl mx-auto h-full grid grid-cols-12 gap-0 border-x ${isDarkMode ? 'border-white' : 'border-black'}`}>
             {[...Array(11)].map((_, i) => <div key={i} className={`border-r h-full ${isDarkMode ? 'border-white' : 'border-black'}`} />)}
