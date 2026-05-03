@@ -1332,18 +1332,18 @@ const App = () => {
       {/* --- SEÇÃO: E-COMMERCE / LOJA --- */}
       <section id="loja" className={`py-40 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-zinc-50'}`}>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-20">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-16 lg:mb-20 gap-8">
              <FadeIn direction="right">
               <div>
-                <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-4">Silva Brothers Armory</span>
-                <h2 className="text-5xl md:text-7xl font-black uppercase italic leading-none tracking-tighter">
+                <span className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-4 text-center md:text-left">Silva Brothers Armory</span>
+                <h2 className="text-3xl sm:text-5xl md:text-7xl font-black uppercase italic leading-none tracking-tighter text-center md:text-left">
                   EQUIPAMENTO <br />
                   <span className={isDarkMode ? 'text-white' : 'text-black'}>DE GUERRA</span>
                 </h2>
               </div>
             </FadeIn>
             <FadeIn direction="left">
-               <button disabled className={`mt-8 md:mt-0 flex items-center gap-4 px-8 py-4 font-black italic uppercase tracking-widest -skew-x-12 opacity-50 cursor-not-allowed transition-all ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                <button disabled className={`mt-4 md:mt-0 flex items-center gap-4 px-8 py-4 font-black italic uppercase tracking-widest text-xs -skew-x-12 opacity-50 cursor-not-allowed transition-all mx-auto md:mx-0 ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
                 <ShoppingBag size={20} />
                 VISITAR E-COMMERCE
               </button>
@@ -1422,9 +1422,9 @@ const App = () => {
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <FadeIn direction="up">
-            <div className="mb-24">
-              <span className="text-red-600 font-black italic tracking-[0.5em] text-xs uppercase block mb-6">Por que treinar conosco?</span>
-              <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
+            <div className="mb-16 md:mb-24 flex flex-col items-center md:items-start text-center md:text-left">
+              <span className="text-red-600 font-black italic tracking-[0.5em] text-[10px] sm:text-xs uppercase block mb-6">Por que treinar conosco?</span>
+              <h2 className="text-4xl sm:text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-6">
                 NOSSAS <br />
                 <SplitText text="VANTAGENS" className="text-red-600" baseDelay={0.3} />
               </h2>
@@ -1676,10 +1676,10 @@ const App = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-8">
+          <div className="flex flex-col md:flex-row items-center md:items-end justify-between mb-16 md:mb-24 gap-8">
             <FadeIn direction="right">
-              <div>
-                <h2 className="text-6xl md:text-9xl font-black italic uppercase tracking-tighter leading-[0.8] mb-4">
+              <div className="flex flex-col items-center md:items-start">
+                <h2 className="text-4xl sm:text-7xl md:text-9xl font-black italic uppercase tracking-tighter leading-[0.8] mb-4 text-center md:text-left">
                   ESCOLHA <br />
                   <SplitText
                     text="SEU PLANO"
@@ -1692,7 +1692,7 @@ const App = () => {
               </div>
             </FadeIn>
             <FadeIn direction="left">
-              <p className="text-zinc-500 max-w-sm text-right font-black italic uppercase text-xs tracking-widest leading-loose border-r-4 border-white/10 pr-6">
+              <p className="text-zinc-500 max-w-sm text-center md:text-right font-black italic uppercase text-[10px] sm:text-xs tracking-widest leading-loose border-b-4 md:border-b-0 md:border-r-4 border-white/10 pb-6 md:pb-0 md:pr-6 mx-auto md:mx-0">
                 Investimento focado em performance. Sem taxas escondidas, apenas a verdade do tatame.
               </p>
             </FadeIn>
