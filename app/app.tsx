@@ -1107,7 +1107,7 @@ const App = () => {
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { 
                 title: 'Jiu-Jitsu', 
@@ -1128,6 +1128,16 @@ const App = () => {
                 title: 'Wrestling', 
                 desc: 'Domine as quedas e o controle posicional no tatame.', 
                 icon: <Flame size={32} /> 
+              },
+              { 
+                title: 'Muay Thai', 
+                desc: 'A arte das oito armas: técnica refinada de chutes, socos, cotovelos e joelhadas.', 
+                icon: <Zap size={32} /> 
+              },
+              { 
+                title: 'No-Gi', 
+                desc: 'O Jiu-Jitsu sem kimono, focado em velocidade, explosão e controle posicional técnico.', 
+                icon: <Wind size={32} /> 
               }
             ].map((mod, i) => (
               <FadeIn key={i} delay={i * 0.15}>
@@ -2045,7 +2055,7 @@ const App = () => {
                 Modalidades
               </h5>
               <ul className="space-y-3">
-                {['Jiu-Jitsu Kimono', 'No-Gi Grappling', 'Submission', 'Wrestling', 'Defesa Pessoal', 'Jiu-Jitsu Kids'].map((m) => (
+                {['Jiu-Jitsu', 'No-Gi', 'Submission', 'Wrestling', 'Muay Thai', 'Defesa Pessoal', 'Jiu-Jitsu Kids'].map((m) => (
                   <li key={m}>
                     <span className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
                       <div className="w-1 h-1 bg-red-600 rounded-full" />
